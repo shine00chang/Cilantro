@@ -1,6 +1,6 @@
 use core::fmt;
 
-use crate::cilantro::common::{ Node, Elem };
+use crate::cilantro::{ Node, Elem };
 
 impl fmt::Display for Node {
     /// Prints out node tree in a vertical graph. Wraps Node::ft
@@ -54,12 +54,13 @@ impl Node {
 mod test {
     use super::*;
     use std::rc::Rc;
-    use crate::cilantro::common::{
+    use crate::cilantro::{
         TokenT,
         NodeT,
         Token,
     };
 
+    #[allow(non_snake_case)]
     #[test]
     fn test () {
         let n = {

@@ -1,35 +1,11 @@
-use std::rc::Rc;
+use super::*;
 
-#[allow(non_camel_case_types)]
-#[derive(Debug, Clone)]
-pub enum TokenT {
-    a,
-    b,
-    x
+pub struct Production {
+    node: NodeT,
+    word: Vec<ElemT>
 }
 
-#[derive(Clone)]
-pub struct Token {
-    pub start: usize,
-    pub end: usize,
-    pub t: TokenT
-}
-
-#[derive(Debug, Clone)]
-pub enum NodeT {
-    A, 
-    S,
-}
-#[derive(Clone)]
-pub struct Node {
-    pub start: Rc<Token>,
-    pub end: Rc<Token>,
-    pub t: NodeT,
-    pub children: Vec<Elem>
-}
-
-#[derive(Clone)]
-pub enum Elem {
-    Node(Node),
-    Token(Token),
+pub enum Action {
+    Shift(usize),
+    Reduce(usize)
 }
