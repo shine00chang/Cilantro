@@ -1,8 +1,8 @@
 use super::*;
 
 pub struct Production {
-    node: NodeT,
-    word: Vec<ElemT>
+    pub node: NodeT,
+    pub word: Vec<ElemT>
 }
 
 pub enum Action {

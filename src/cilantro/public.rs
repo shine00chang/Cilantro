@@ -1,25 +1,15 @@
 use std::rc::Rc;
+pub use super::grammar::{NodeT, TokenT};
 
-#[allow(non_camel_case_types)]
-#[derive(Debug, Clone)]
-pub enum TokenT {
-    a,
-    b,
-    x
-}
 
 #[derive(Clone)]
 pub struct Token {
     pub start: usize,
     pub end: usize,
-    pub t: TokenT
+    pub t: TokenT,
 }
 
-#[derive(Debug, Clone)]
-pub enum NodeT {
-    A, 
-    S,
-}
+
 #[derive(Clone)]
 pub struct Node {
     pub start: Rc<Token>,
@@ -33,6 +23,7 @@ pub enum ElemT {
     Node(NodeT),
     Token(TokenT)
 }
+
 #[derive(Clone)]
 pub enum Elem {
     Node(Node),
