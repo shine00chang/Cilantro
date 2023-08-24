@@ -1,17 +1,25 @@
 use nom::{
-    branch::alt,
     IResult,
+    branch::alt,
+    error::ParseError,
     combinator::{map_res},
     multi::{many1, many0},
     bytes::complete::{tag},
-    character::complete::{char, digit1}, 
-    sequence::terminated
+    character::complete::{char, digit1, multispace0}, 
+    sequence::{terminated, delimited}
 };
 
 use super::*;
 
+fn ws<'a, F, O, E: ParseError<&'a str>>(parser: F) -> impl FnMut(&'a str) -> IResult<&'a str, O, E> 
+where 
+    F: nom::Parser<&'a str, O, E>
+{
+    delimited(multispace0, parser, multispace0)
+}
+
 fn int (input: &str) -> IResult<&str, Token> {
-    map_res(
+    ws(map_res(
         many1(
             terminated(digit1, many0(char('_')))
         ),
@@ -25,11 +33,12 @@ fn int (input: &str) -> IResult<&str, Token> {
                 t: TokenT::INT(n)
             })
         }
-    )(input)
+    ))
+        (input)
 }
 
 fn bol (input: &str) -> IResult<&str, Token> {
-    map_res(
+    ws(map_res(
         alt((tag("true"), tag("false"))),
         |s: &str| -> Result<Token, std::str::ParseBoolError> {
             let b = s.parse::<bool>()?;
@@ -40,11 +49,11 @@ fn bol (input: &str) -> IResult<&str, Token> {
                 t: TokenT::BOOL(b)
             })
         }
-    )(input)
+    ))(input)
 }
 
 pub fn tokenize (source: String) -> Vec<Token> {
-    let parser = many0(alt((int, bol)));
+    let mut parser = many0(alt((int, bol)));
     let tokens = parser(&source).unwrap().1;
     tokens
 }
@@ -57,7 +66,7 @@ mod test {
 
     #[test]
     fn test () {
-        let v = tokenize("100false68_104truetrue".to_owned());
+        let v = tokenize("  100   false 68_104  truetrue".to_owned());
         assert!(matches!(v[0].t, TokenT::INT(100)));
         assert!(matches!(v[1].t, TokenT::BOOL(false)));
         assert!(matches!(v[2].t, TokenT::INT(68104)));

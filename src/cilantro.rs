@@ -4,9 +4,9 @@ mod grammar;
 mod lexer;
 mod parser;
 
-use common::*;
 pub use public::*;
-pub use parser::Parser;
+use common::*;
+use parser::Parser;
 
 
 /// Runs Lexer, Parser, Interpreter, and Visualizer
