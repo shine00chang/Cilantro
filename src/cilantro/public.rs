@@ -2,7 +2,7 @@ use std::rc::Rc;
 pub use super::grammar::{NodeT, TokenT};
 
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct Token {
     pub start: usize,
     pub end: usize,
@@ -10,7 +10,7 @@ pub struct Token {
 }
 
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct Node {
     pub start: Rc<Token>,
     pub end: Rc<Token>,
@@ -24,7 +24,7 @@ pub enum ElemT {
     Token(TokenT)
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub enum Elem {
     Node(Node),
     Token(Token),

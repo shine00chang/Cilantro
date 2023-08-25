@@ -5,9 +5,15 @@ use super::*;
 pub enum TokenT {
     a,
     b,
+    x,
+    K_LET,
+    EQ_1,
+    EQ_2,
+    IDENT(String),
     INT(i32),
     BOOL(bool),
-    x
+    PAREN_L,
+    PAREN_R,
 }
 
 
