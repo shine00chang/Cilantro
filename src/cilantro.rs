@@ -7,6 +7,7 @@ mod parser;
 pub use public::*;
 use common::*;
 use parser::Parser;
+pub use lexer::tokenize;
 
 
 /// Runs Lexer, Parser, Interpreter, and Visualizer

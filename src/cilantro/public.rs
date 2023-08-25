@@ -8,6 +8,7 @@ pub struct Token {
     pub end: usize,
     pub t: TokenT,
 }
+pub type Tokens = Vec<Token>;
 
 
 #[derive(Debug, Clone)]

@@ -15,7 +15,7 @@ impl Parser {
     /// Creates a new parser instance. 
     /// Generates Parser table from production list. 
     /// Edit production list in `/src/cilantro/grammar.rs`
-    pub fn new (tokens: Vec<Token>) -> Self {
+    pub fn new (tokens: Tokens) -> Self {
         let productions = make_productions();
 
         let table: Vec<HashMap<String, Action>> = vec![];

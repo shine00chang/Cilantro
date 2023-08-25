@@ -1,6 +1,6 @@
 use core::fmt;
 
-use crate::cilantro::{ Node, Elem };
+use crate::cilantro::{ Node, Tokens, Elem };
 
 impl fmt::Display for Node {
     /// Prints out node tree in a vertical graph. Wraps Node::ft
@@ -49,6 +49,43 @@ impl Node {
     }
 }
 
+
+fn visualize_tokens<F> (f: &mut F, toks: &Tokens, source: &String) -> std::fmt::Result 
+where
+    F: std::fmt::Write
+{ 
+    let mut i = 0;
+    for tok in toks {
+        while i < tok.start * 3 {
+            write!(f, " ")?;
+            i += 1;
+        }
+        let mut s = format!("{:?}", tok.t);
+        if let Some(t) = s.split_once('(') {
+            s = String::from(t.0);
+        }
+        i += s.len();
+        write!(f, "{s}")?;
+    }
+    write!(f, "\n")?;
+
+    let mut i = 0;
+    for tok in toks {
+        while i < tok.start * 3 {
+            write!(f, " ")?;
+            i += 1;
+        }
+        write!(f, "│")?;
+        i += 1;
+    }
+    write!(f, "\n")?;
+    
+    for c in source.chars() {
+        write!(f, "{:<3}", c.escape_debug().to_string())?;
+    }
+    write!(f, "\n")?;
+    Ok(())
+}
 
 #[cfg(test)]
 mod test {
@@ -124,5 +161,24 @@ mod test {
         print!("{n}");
 
         assert_eq!(o, s);
+    }
+
+
+    use crate::cilantro::tokenize;
+    #[test]
+    fn tokens () {
+        let source = "let a = 100\n let b = 68_104".to_owned();
+        let toks = tokenize(source.clone());
+        let mut s = String::new();
+        visualize_tokens(&mut s, &toks, &source).unwrap();
+
+        let res = concat!(
+            "K_LET       IDENT EQ_1  INT            K_LET       IDENT EQ_1  INT\n",
+            "│           │     │     │              │           │     │     │\n",
+            "l  e  t     a     =     1  0  0  \\n    l  e  t     b     =     6  8  _  1  0  4  \n"
+        );
+        println!("{}", res);
+
+        assert_eq!(s, res);
     }
 }

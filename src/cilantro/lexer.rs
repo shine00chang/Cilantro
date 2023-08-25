@@ -132,7 +132,7 @@ fn ident (input: Span) -> IResult<Span, Token> {
 }
 
 
-pub fn tokenize (source: String) -> Vec<Token> {
+pub fn tokenize (source: String) -> Tokens {
 
     // NOTE: Ident has to be placed *AFTER* keywords, otherwise it will treat every keyword as an
     // identifier.
