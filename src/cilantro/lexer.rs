@@ -161,12 +161,15 @@ pub fn tokenize (source: String) -> Tokens {
 #[cfg(test)]
 mod test {
     use super::*;
+    use crate::visualizer::visualize_tokens;
 
     #[test]
     fn test () {
-        let v = tokenize("let a = 100\n let b = 68_104".to_owned());
+        let s = "let a = 100\n let b = 68_104".to_owned();
+        let v = tokenize(s.clone());
 
-        println!("{:?}", v);
+        println!("{}", visualize_tokens(&v, &s).unwrap());
+
         assert!(matches!(v[0].t, TokenT::K_LET));
         match &v[1].t {
             TokenT::IDENT(s) => s == "a",

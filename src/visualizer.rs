@@ -49,11 +49,9 @@ impl Node {
     }
 }
 
-
-fn visualize_tokens<F> (f: &mut F, toks: &Tokens, source: &String) -> std::fmt::Result 
-where
-    F: std::fmt::Write
-{ 
+use std::fmt::Write;
+pub fn visualize_tokens (toks: &Tokens, source: &String) -> Result<String, std::fmt::Error> { 
+    let mut f = String::new();
     let mut i = 0;
     for tok in toks {
         while i < tok.start * 3 {
@@ -84,7 +82,7 @@ where
         write!(f, "{:<3}", c.escape_debug().to_string())?;
     }
     write!(f, "\n")?;
-    Ok(())
+    Ok(f)
 }
 
 #[cfg(test)]
@@ -169,8 +167,7 @@ mod test {
     fn tokens () {
         let source = "let a = 100\n let b = 68_104".to_owned();
         let toks = tokenize(source.clone());
-        let mut s = String::new();
-        visualize_tokens(&mut s, &toks, &source).unwrap();
+        let s = visualize_tokens(&toks, &source).unwrap();
 
         let res = concat!(
             "K_LET       IDENT EQ_1  INT            K_LET       IDENT EQ_1  INT\n",
