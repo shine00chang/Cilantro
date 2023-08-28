@@ -1,5 +1,4 @@
 mod cilantro; 
-mod visualizer;
 
 use std::env;
 use std::fs::File;

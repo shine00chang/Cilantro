@@ -1,6 +1,38 @@
+use std::fmt::Write;
 use core::fmt;
+use super::*;
 
-use crate::cilantro::{ Node, Tokens, Elem };
+
+impl fmt::Display for ElemT {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            ElemT::Node(n) => write!(f, "{n}"),
+            ElemT::Token(t) => write!(f, "{t}")
+        }
+    }
+}
+
+impl fmt::Display for TokenT {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let mut s = format!("{:?}", self);
+        if let Some(t) = s.split_once('(') {
+            s = String::from(t.0);
+        }
+        write!(f, "{s}")
+    }
+}
+
+
+impl fmt::Display for NodeT {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let mut s = format!("{:?}", self);
+        if let Some(t) = s.split_once('(') {
+            s = String::from(t.0);
+        }
+        write!(f, "{s}")
+    }
+}
+
 
 impl fmt::Display for Node {
     /// Prints out node tree in a vertical graph. Wraps Node::ft
@@ -8,6 +40,7 @@ impl fmt::Display for Node {
         self.ft(f, &String::from(" "))
     }
 }
+
 
 impl Node {
     /// Prints out node tree in a vertical graph
@@ -49,8 +82,9 @@ impl Node {
     }
 }
 
-use std::fmt::Write;
-pub fn visualize_tokens (toks: &Tokens, source: &String) -> Result<String, std::fmt::Error> { 
+
+/// Visually maps tokens to the source string.
+pub fn print_tokens (toks: &Tokens, source: &String) -> Result<String, std::fmt::Error> { 
     let mut f = String::new();
     let mut i = 0;
     for tok in toks {
@@ -58,10 +92,7 @@ pub fn visualize_tokens (toks: &Tokens, source: &String) -> Result<String, std::
             write!(f, " ")?;
             i += 1;
         }
-        let mut s = format!("{:?}", tok.t);
-        if let Some(t) = s.split_once('(') {
-            s = String::from(t.0);
-        }
+        let s = format!("{}", tok.t);
         i += s.len();
         write!(f, "{s}")?;
     }
@@ -84,6 +115,59 @@ pub fn visualize_tokens (toks: &Tokens, source: &String) -> Result<String, std::
     write!(f, "\n")?;
     Ok(f)
 }
+
+
+
+use super::parser::ParseTable;
+use strum::IntoEnumIterator;
+/// Prints out & formats parsing table
+pub fn print_table (table: &ParseTable) -> Result<String, std::fmt::Error> { 
+    let mut f = String::new();
+
+    // Top row. List out tokens & node types.
+    write!(f, "   |")?;
+    for tok in TokenT::iter() {
+        write!(f, "{:8.8}|", format!("{tok}"))?;
+    }
+    for nod in NodeT::iter() {
+        write!(f, "{:8.8}|", format!("{nod}"))?;
+    }
+    write!(f, "\n")?;
+
+    // Rows
+    for i in 0..table.len() {
+        let row = &table[i];
+
+        write!(f, "{:3}|", i)?;
+
+        for tok in TokenT::iter() {
+            if let Some(a) = row.get(&ElemT::Token(tok)) {
+                match a {
+                    Action::Shift(r)  => write!(f, "S {:6}|", r)?,
+                    Action::Reduce(p) => write!(f, "R {:6}|", p)?,
+                }
+            } else {
+                write!(f, "{:8}|", "")?;
+            }
+        }       
+
+        for nod in NodeT::iter() {
+            if let Some(a) = row.get(&ElemT::Node(nod)) {
+                match a {
+                    Action::Shift(r)  => write!(f, "S {:6}|", r)?,
+                    Action::Reduce(p) => write!(f, "R {:6}|", p)?,
+                }
+            } else {
+                write!(f, "{:8}|", "")?;
+            }
+        }       
+        write!(f, "\n")?;
+    }
+    
+    Ok(f)
+}
+
+
 
 #[cfg(test)]
 mod test {
@@ -167,7 +251,7 @@ mod test {
     fn tokens () {
         let source = "let a = 100\n let b = 68_104".to_owned();
         let toks = tokenize(source.clone());
-        let s = visualize_tokens(&toks, &source).unwrap();
+        let s = print_tokens(&toks, &source).unwrap();
 
         let res = concat!(
             "K_LET       IDENT EQ_1  INT            K_LET       IDENT EQ_1  INT\n",
