@@ -34,7 +34,7 @@ pub enum Elem {
     Token(Token),
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Action {
     Shift(usize),
     Reduce(usize)

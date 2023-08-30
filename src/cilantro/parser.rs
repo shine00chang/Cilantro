@@ -300,9 +300,35 @@ mod test {
 
     #[test]
     fn table_test () {
-        let s = "baab".to_owned();
-        let v = tokenize(s.clone());
-
         let table = make_table(&Productions::make_test());
+        /*
+           |a       |b       |A       |S       |
+          0|S      1|S      2|S      4|        |
+          1|S      1|S      2|S      3|        |
+          2|R      1|R      1|R      1|        |
+          3|R      2|R      2|R      2|        |
+          4|S      1|S      2|S      5|        |
+          5|        |        |        |        |
+         */
+
+        assert_eq!(*table[0].get(&ElemT::Token(TokenT::a)).unwrap(), Action::Shift(1));
+        assert_eq!(*table[0].get(&ElemT::Token(TokenT::b)).unwrap(), Action::Shift(2));
+        assert_eq!(*table[0].get(&ElemT::Node(NodeT::A)).unwrap(),   Action::Shift(4));
+
+        assert_eq!(*table[1].get(&ElemT::Token(TokenT::a)).unwrap(), Action::Shift(1));
+        assert_eq!(*table[1].get(&ElemT::Token(TokenT::b)).unwrap(), Action::Shift(2));
+        assert_eq!(*table[1].get(&ElemT::Node(NodeT::A)).unwrap(),   Action::Shift(3));
+
+        assert_eq!(*table[2].get(&ElemT::Token(TokenT::a)).unwrap(), Action::Reduce(1));
+        assert_eq!(*table[2].get(&ElemT::Token(TokenT::b)).unwrap(), Action::Reduce(1));
+        assert_eq!(*table[2].get(&ElemT::Node(NodeT::A)).unwrap(),   Action::Reduce(1));
+
+        assert_eq!(*table[3].get(&ElemT::Token(TokenT::a)).unwrap(), Action::Reduce(2));
+        assert_eq!(*table[3].get(&ElemT::Token(TokenT::b)).unwrap(), Action::Reduce(2));
+        assert_eq!(*table[3].get(&ElemT::Node(NodeT::A)).unwrap(),   Action::Reduce(2));
+
+        assert_eq!(*table[4].get(&ElemT::Token(TokenT::a)).unwrap(), Action::Shift(1));
+        assert_eq!(*table[4].get(&ElemT::Token(TokenT::b)).unwrap(), Action::Shift(2));
+        assert_eq!(*table[4].get(&ElemT::Node(NodeT::A)).unwrap(),   Action::Shift(5));
     }
 }
