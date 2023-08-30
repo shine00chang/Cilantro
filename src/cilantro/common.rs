@@ -49,5 +49,13 @@ pub struct Productions {
     pub follows: HashMap<NodeT, HashSet<ElemT>>,
     pub root: usize,
 }
-
+impl std::fmt::Display for Production {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{} -> ", self.node)?;
+        for x in &self.v {
+            write!(f, "{}", x)?;
+        }
+        Ok(())
+    }
+}
 
