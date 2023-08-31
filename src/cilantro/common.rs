@@ -56,7 +56,7 @@ pub struct Production {
 pub struct Productions {
     pub v: Vec<Production>,
     pub follows: HashMap<NodeT, HashSet<ElemT>>,
-    pub root: usize,
+    pub roots: HashSet<NodeT>,
 }
 impl std::fmt::Display for Production {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {

@@ -10,8 +10,10 @@ use strum_macros::{EnumIter, EnumDiscriminants};
 #[strum_discriminants(name(TokenT))]
 #[strum_discriminants(allow(non_camel_case_types))]
 pub enum TokenData {
+    EOF,
+
     a(char),
-    b,
+    b(char),
     x,
 
     K_LET,
@@ -36,12 +38,15 @@ pub enum NodeData {
 
 
 impl Node { 
-    pub fn make (t: NodeT, v: Vec<Elem>) -> Result<Node, &'static str> {
+    pub fn make (t: &NodeT, v: Vec<Elem>) -> Result<Node, &'static str> {
         let data = match t {
             NodeT::A => {
                 let c = if let Elem::Token(t) = &v[0] {
-                    if let TokenData::a(c) = t.data { c }
-                    else { return Err("false") }
+                    match t.data {
+                        TokenData::a(c) => c,
+                        TokenData::b(c) => c,
+                        _ => return Err("false")
+                    }
                 } else { return Err("false") };
                 NodeData::A { c }
             },
@@ -51,7 +56,7 @@ impl Node {
         };
         Ok(Node {
             data,
-            children: vec![],
+            children: v,
         })
     }
 }
@@ -59,6 +64,9 @@ impl Node {
 use std::collections::{HashMap, HashSet};
 impl Productions {
     pub fn make () -> Self {
+        let apices = vec![
+            NodeT::S
+        ];
         let v = vec![
             Production {
                 node: NodeT::S,
@@ -73,11 +81,14 @@ impl Productions {
                 v: vec![ ElemT::Token(TokenT::a), ElemT::Node(NodeT::A) ]
             }
         ];
-        Self::new(v)
+        Self::new(apices, v)
     }
     
     #[cfg(test)]
     pub fn make_test () -> Self {
+        let apices = vec![
+            NodeT::S
+        ];
         let v = vec![
             Production {
                 node: NodeT::S,
@@ -92,30 +103,43 @@ impl Productions {
                 v: vec![ ElemT::Token(TokenT::a), ElemT::Node(NodeT::A) ]
             }
         ];
-        Self::new(v)
+        Self::new(apices, v)
     }
 
-    fn new (v: Vec<Production>) -> Self {
-        let follows = Self::make_follows(&v);
-
-        Self {
-            root: 0,
+    fn new (roots: Vec<NodeT>, v: Vec<Production>) -> Self {
+        let mut s = Self {
+            roots: roots.into_iter().collect(),
             v,
-            follows
-        }
+            follows: HashMap::new()
+        };
+        
+        s.follows = s.make_follows();
+        s
     }
 
     /// Generates the FOLLOWS(x) set.
-    fn make_follows (prods: &Vec<Production>) -> HashMap<NodeT, HashSet<ElemT>> {
+    fn make_follows (&self) -> HashMap<NodeT, HashSet<ElemT>> {
 
         let mut begins: HashMap<_, _> = NodeT::iter()
-            .map(|n| (n, (HashSet::new(), HashSet::new())))
+            .map(|n| {
+                let mut s = HashSet::new();
+                s.insert(TokenT::EOF);
+                (n, (HashSet::new(), s))
+            })
             .collect();
         let mut follows: HashMap<_, _> = NodeT::iter()
-            .map(|n| (n, (HashSet::new(), HashSet::new())))
+            .map(|n| {
+                if self.roots.contains(&n) {
+                    let mut s = HashSet::new();
+                    s.insert(TokenT::EOF);
+                    (n, (HashSet::new(), s))
+                } else {
+                    (n, (HashSet::new(), HashSet::new()))
+                }
+            })
             .collect();
 
-        for prod in prods {
+        for prod in &self.v {
             match &prod.v[0] {
                 ElemT::Node(n) => 
                     begins.get_mut(&prod.node)

@@ -151,7 +151,7 @@ fn b (input: Span) -> IResult<Span, Token> {
             Ok(Token {
                 start: s.location_offset(),
                 end: 0,
-                data: TokenData::b
+                data: TokenData::b('b')
             })
         }
     ))(input)
@@ -184,7 +184,8 @@ pub fn tokenize (source: String) -> Tokens {
         println!("{}", res.0);
         panic!("Lexer did not consume the entire string.");
     }
-    let tokens = res.1;
+    let mut tokens = res.1;
+    tokens.push(Token{ start: source.len(), end: 0, data: TokenData::EOF});
     tokens
 }
 
@@ -218,9 +219,9 @@ mod test {
 
         println!("{}", visualizer::print_tokens(&v, &s).unwrap());
 
-        assert!(v[0].data == TokenData::b);
+        assert!(v[0].data == TokenData::b('b'));
         assert!(v[1].data == TokenData::a('a'));
         assert!(v[2].data == TokenData::a('a'));
-        assert!(v[3].data == TokenData::b);
+        assert!(v[3].data == TokenData::b('b'));
     }
 }

@@ -12,6 +12,15 @@ impl fmt::Display for ElemT {
     }
 }
 
+impl fmt::Display for Elem {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Elem::Node(n) => write!(f, "{}", n.data),
+            Elem::Token(t) => write!(f, "{}", t.data)
+        }
+    }
+}
+
 impl fmt::Display for TokenT {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{:?}", self)
@@ -189,12 +198,12 @@ mod test {
             let b1 = Token {
                 start: 0,
                 end: 0,
-                data: TokenData::b
+                data: TokenData::b('b')
             };
             let b2 = Token {
                 start: 0,
                 end: 0,
-                data: TokenData::b
+                data: TokenData::b('b')
             };
             let A1 = Node {
                 data: NodeData::A{ c: 'a' },

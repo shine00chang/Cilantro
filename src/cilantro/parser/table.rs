@@ -159,16 +159,26 @@ impl Productions {
             v: vec![],
             map: HashMap::new()
         };
-        let mut init_item = HashSet::new();
-        init_item.insert(Item::new(self.root));
+        let mut init_items = HashSet::new();
+        for i in 0..self.v.len() {
+            let p = &self.v[i];
+            if self.roots.contains(&p.node) {
+                init_items.insert(Item::new(i));
+            }
+        }
 
-        make_state(self, &mut states, init_item);
+        make_state(self, &mut states, init_items);
 
         println!("FINAL STATES:");
         states.print(self);
 
         // Make Table
-        let table: Vec<_> = states.v.into_iter().map(|s| s.edges).collect(); 
+        let mut table: Vec<_> = states.v.into_iter().map(|s| s.edges).collect(); 
+
+        // All roots go Shift to origin state.
+        for root in &self.roots {
+            table[0].insert(ElemT::Node(root.clone()), Action::Shift(0));
+        }
 
         println!("PARSING TABLE:");
         println!("{}", visualizer::print_table(&table).unwrap());
@@ -237,7 +247,7 @@ fn make_state (prods: &Productions, states: &mut States, inherits: HashSet<Item>
                 // The execution of this block means an item has been found that reduces to
                 // something that isn't followed by anything.
                 // The only case where this should happen is on the root node.
-                assert!(item.node(prods) == prods.v[prods.root].node);
+                assert!(prods.roots.contains(&item.node(prods)));
             }
         }
     }
