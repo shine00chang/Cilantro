@@ -1,11 +1,16 @@
 use super::*;
 use strum::IntoEnumIterator;
-use strum_macros::EnumIter;
+use strum_macros::{EnumIter, EnumDiscriminants};
+
+
 
 #[allow(non_camel_case_types)]
-#[derive(Debug, Clone, Hash, PartialEq, Eq, EnumIter)]
-pub enum TokenT {
-    a,
+#[derive(PartialEq, Eq, Debug, Clone, EnumIter, EnumDiscriminants)]
+#[strum_discriminants(derive(Hash, EnumIter))]
+#[strum_discriminants(name(TokenT))]
+#[strum_discriminants(allow(non_camel_case_types))]
+pub enum TokenData {
+    a(char),
     b,
     x,
 
@@ -21,10 +26,34 @@ pub enum TokenT {
 
 
 
-#[derive(Debug, Clone, Hash, PartialEq, Eq, EnumIter)]
-pub enum NodeT {
-    A, 
-    S,
+#[derive(PartialEq, Eq, Debug, Clone, EnumIter, EnumDiscriminants)]
+#[strum_discriminants(derive(Hash, EnumIter))]
+#[strum_discriminants(name(NodeT))]
+pub enum NodeData {
+    A { c: char },
+    S { x: usize },
+}
+
+
+impl Node { 
+    pub fn make (t: NodeT, v: Vec<Elem>) -> Result<Node, &'static str> {
+        let data = match t {
+            NodeT::A => {
+                let c = if let Elem::Token(t) = &v[0] {
+                    if let TokenData::a(c) = t.data { c }
+                    else { return Err("false") }
+                } else { return Err("false") };
+                NodeData::A { c }
+            },
+            NodeT::S => {
+                NodeData::S { x: 10 }
+            }
+        };
+        Ok(Node {
+            data,
+            children: vec![],
+        })
+    }
 }
 
 use std::collections::{HashMap, HashSet};

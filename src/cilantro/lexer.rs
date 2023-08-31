@@ -36,7 +36,7 @@ fn int (input: Span) -> IResult<Span, Token> {
             Ok(Token {
                 start: v[0].location_offset(),
                 end: 0,
-                t: TokenT::INT(n)
+                data: TokenData::INT(n)
             })
         }
     ))
@@ -53,7 +53,7 @@ fn bol (input: Span) -> IResult<Span, Token> {
             Ok(Token {
                 start: s.location_offset(),
                 end: 0,
-                t: TokenT::BOOL(b)
+                data: TokenData::BOOL(b)
             })
         }
     ))(input)
@@ -64,15 +64,15 @@ fn equal (input: Span) -> IResult<Span, Token> {
     ws(map_res(
         many1(tag("=")),
         |v: Vec<Span>| -> Result<Token, nom::error::Error<Span>> {
-            let t = match v.len() {
-                1 => TokenT::EQ_1, 
-                2 => TokenT::EQ_2, 
+            let data = match v.len() {
+                1 => TokenData::EQ_1, 
+                2 => TokenData::EQ_2, 
                 _   => unreachable!()
             };
             Ok(Token {
                 start: v[0].location_offset(),
                 end: 0,
-                t
+                data
             })
         }
     ))(input)
@@ -83,22 +83,22 @@ fn paren(input: Span) -> IResult<Span, Token> {
     ws(map_res(
         alt((tag("("), tag(")"))),
         |s: Span| -> Result<Token, nom::error::Error<Span>> {
-            let t = match s.fragment() {
-                &"(" => TokenT::PAREN_L,
-                &")" => TokenT::PAREN_R,
+            let data = match s.fragment() {
+                &"(" => TokenData::PAREN_L,
+                &")" => TokenData::PAREN_R,
                 _   => unreachable!()
             };
             Ok(Token {
                 start: s.location_offset(),
                 end: 0,
-                t
+                data 
             })
         }
     ))(input)
 }
 
 
-fn keyword<'a>(keyword: &'static str, token_t: TokenT) -> impl FnMut(Span<'a>) -> IResult<Span<'a>, Token, nom::error::Error<Span<'a>>> 
+fn keyword<'a>(keyword: &'static str, token: TokenData) -> impl FnMut(Span<'a>) -> IResult<Span<'a>, Token, nom::error::Error<Span<'a>>> 
 {
     ws(map_res(
         tag(keyword),
@@ -106,7 +106,7 @@ fn keyword<'a>(keyword: &'static str, token_t: TokenT) -> impl FnMut(Span<'a>) -
             Ok(Token {
                 start: s.location_offset(),
                 end: 0,
-                t: token_t.clone()
+                data: token.clone()
             })
         }
     ))
@@ -125,11 +125,39 @@ fn ident (input: Span) -> IResult<Span, Token> {
             Ok(Token {
                 start: s.location_offset(),
                 end: 0,
-                t: TokenT::IDENT(s.into_fragment().to_owned())
+                data: TokenData::IDENT(s.into_fragment().to_owned())
             })
         }
     ))(input)
 }
+
+fn a (input: Span) -> IResult<Span, Token> {
+    ws(map_res(
+        tag("a"),
+        |s: Span| -> Result<Token, nom::error::Error<Span>> {
+            Ok(Token {
+                start: s.location_offset(),
+                end: 0,
+                data: TokenData::a('a')
+            })
+        }
+    ))(input)
+}
+
+fn b (input: Span) -> IResult<Span, Token> {
+    ws(map_res(
+        tag("b"),
+        |s: Span| -> Result<Token, nom::error::Error<Span>> {
+            Ok(Token {
+                start: s.location_offset(),
+                end: 0,
+                data: TokenData::b
+            })
+        }
+    ))(input)
+}
+
+
 
 
 pub fn tokenize (source: String) -> Tokens {
@@ -139,11 +167,15 @@ pub fn tokenize (source: String) -> Tokens {
     
     let span = Span::new(&source);
     let parsers = (
+        // Tests
+        a,
+        b,
+
         int,
         bol,
         equal,
         paren,
-        keyword("let", TokenT::K_LET),
+        keyword("let", TokenData::K_LET),
         ident,
     );
     let mut parser = many1(alt(parsers));
@@ -164,24 +196,31 @@ mod test {
 
     #[test]
     fn test () {
-        let s = "let a = 100\n let b = 68_104".to_owned();
+        let s = "let A = 100\n let B = 68_104".to_owned();
         let v = tokenize(s.clone());
 
         println!("{}", visualizer::print_tokens(&v, &s).unwrap());
 
-        assert!(matches!(v[0].t, TokenT::K_LET));
-        match &v[1].t {
-            TokenT::IDENT(s) => s == "a",
-            _ => panic!()
-        };
-        assert!(matches!(v[2].t, TokenT::EQ_1));
-        assert!(matches!(v[3].t, TokenT::INT(100)));
-        assert!(matches!(v[4].t, TokenT::K_LET));
-        match &v[5].t {
-            TokenT::IDENT(s) => s == "b",
-            _ => panic!()
-        };
-        assert!(matches!(v[6].t, TokenT::EQ_1));
-        assert!(matches!(v[7].t, TokenT::INT(68104)));
+        assert!(v[0].data == TokenData::K_LET);
+        assert!(v[1].data == TokenData::IDENT("A".to_owned()));
+        assert!(v[2].data == TokenData::EQ_1);
+        assert!(v[3].data == TokenData::INT(100));
+        assert!(v[4].data == TokenData::K_LET);
+        assert!(v[5].data == TokenData::IDENT("B".to_owned()));
+        assert!(v[6].data == TokenData::EQ_1);
+        assert!(v[7].data == TokenData::INT(68104));
+    }
+
+    #[test]
+    fn test2 () {
+        let s = "baab".to_owned();
+        let v = tokenize(s.clone());
+
+        println!("{}", visualizer::print_tokens(&v, &s).unwrap());
+
+        assert!(v[0].data == TokenData::b);
+        assert!(v[1].data == TokenData::a('a'));
+        assert!(v[2].data == TokenData::a('a'));
+        assert!(v[3].data == TokenData::b);
     }
 }

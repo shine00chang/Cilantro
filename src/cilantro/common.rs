@@ -1,7 +1,6 @@
 use strum_macros::EnumIs;
 
 use super::*;
-use std::rc::Rc;
 use std::collections::{HashMap, HashSet};
 
 
@@ -9,16 +8,18 @@ use std::collections::{HashMap, HashSet};
 pub struct Token {
     pub start: usize,
     pub end: usize,
-    pub t: TokenT,
+    pub data: TokenData,
 }
 pub type Tokens = Vec<Token>;
 
 
 #[derive(Debug, Clone)]
 pub struct Node {
+/*
     pub start: Rc<Token>,
     pub end: Rc<Token>,
-    pub t: NodeT,
+*/
+    pub data: NodeData,
     pub children: Vec<Elem>
 }
 
@@ -32,6 +33,14 @@ pub enum ElemT {
 pub enum Elem {
     Node(Node),
     Token(Token),
+}
+impl Elem {
+    pub fn t (&self) -> ElemT {
+        match self {
+            Elem::Node(n)  => ElemT::Node(NodeT::from(n.data.clone())),
+            Elem::Token(t) => ElemT::Token(TokenT::from(t.data.clone()))
+        }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

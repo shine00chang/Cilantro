@@ -14,25 +14,29 @@ impl fmt::Display for ElemT {
 
 impl fmt::Display for TokenT {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let mut s = format!("{:?}", self);
-        if let Some(t) = s.split_once('(') {
-            s = String::from(t.0);
-        }
-        write!(f, "{s}")
+        write!(f, "{:?}", self)
     }
 }
 
 
 impl fmt::Display for NodeT {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let mut s = format!("{:?}", self);
-        if let Some(t) = s.split_once('(') {
-            s = String::from(t.0);
-        }
-        write!(f, "{s}")
+        write!(f, "{:?}", self)
     }
 }
 
+impl fmt::Display for TokenData {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", TokenT::from(self))
+    }
+}
+
+
+impl fmt::Display for NodeData {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", NodeT::from(self))
+    }
+}
 
 impl fmt::Display for Node {
     /// Prints out node tree in a vertical graph. Wraps Node::ft
@@ -52,7 +56,7 @@ impl Node {
             
             let mut p = prefix.clone();
             let c = if p.pop() == Some('│') { "├" } else { "└" };
-            write!(f, "{p}{c}── {:?}\n", self.t)?;
+            write!(f, "{p}{c}── {}\n", self.data)?;
         }
         
         // Update prefix
@@ -74,7 +78,7 @@ impl Node {
                 Elem::Token(t) => {
                     let mut p = np.clone();
                     let c = if p.pop() == Some('│') { "├" } else { "└" };
-                    write!(f, "{p}{c}── {:?}\n", t.t)?;
+                    write!(f, "{p}{c}── {}\n", t.data)?;
                 }
             }
         }
@@ -92,7 +96,7 @@ pub fn print_tokens (toks: &Tokens, source: &String) -> Result<String, std::fmt:
             write!(f, " ")?;
             i += 1;
         }
-        let s = format!("{}", tok.t);
+        let s = format!("{}", tok.data);
         i += s.len();
         write!(f, "{s}")?;
     }
@@ -172,59 +176,40 @@ pub fn print_table (table: &ParseTable) -> Result<String, std::fmt::Error> {
 #[cfg(test)]
 mod test {
     use super::*;
-    use std::rc::Rc;
-    use crate::cilantro::{
-        TokenT,
-        NodeT,
-        Token,
-    };
 
     #[allow(non_snake_case)]
     #[test]
-    fn test () {
+    fn node () {
         let n = {
-            let t = Rc::new(Token {
-                start: 0,
-                end: 0,
-                t: TokenT::x
-            });
             let a = Token {
                 start: 0,
                 end: 0,
-                t: TokenT::a
+                data: TokenData::a('a')
             };
             let b1 = Token {
                 start: 0,
                 end: 0,
-                t: TokenT::b
+                data: TokenData::b
             };
             let b2 = Token {
                 start: 0,
                 end: 0,
-                t: TokenT::b
+                data: TokenData::b
             };
             let A1 = Node {
-                start: t.clone(), 
-                end: t.clone(),
-                t: NodeT::A,
+                data: NodeData::A{ c: 'a' },
                 children: vec![Elem::Token(b2)]
             };
             let A2 = Node {
-                start: t.clone(), 
-                end: t.clone(),
-                t: NodeT::A,
+                data: NodeData::A { c: 'a' },
                 children: vec![Elem::Token(a), Elem::Node(A1)]
             };
             let A3 = Node {
-                start: t.clone(), 
-                end: t.clone(),
-                t: NodeT::A,
+                data: NodeData::A { c: 'a' },
                 children: vec![Elem::Token(b1)]
             };
             Node {
-                start: t.clone(),
-                end: t.clone(),
-                t: NodeT::S,
+                data: NodeData::S { x: 10 },
                 children: vec![Elem::Node(A2), Elem::Node(A3)]
             }
         };
@@ -249,14 +234,14 @@ mod test {
     use crate::cilantro::tokenize;
     #[test]
     fn tokens () {
-        let source = "let a = 100\n let b = 68_104".to_owned();
+        let source = "let A = 100\n let B = 68_104".to_owned();
         let toks = tokenize(source.clone());
         let s = print_tokens(&toks, &source).unwrap();
 
         let res = concat!(
             "K_LET       IDENT EQ_1  INT            K_LET       IDENT EQ_1  INT\n",
             "│           │     │     │              │           │     │     │\n",
-            "l  e  t     a     =     1  0  0  \\n    l  e  t     b     =     6  8  _  1  0  4  \n"
+            "l  e  t     A     =     1  0  0  \\n    l  e  t     B     =     6  8  _  1  0  4  \n"
         );
         println!("{}", res);
 

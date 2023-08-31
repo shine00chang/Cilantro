@@ -21,9 +21,6 @@ impl Item {
         }
     }
 
-    fn end (&self, prods: &Productions) -> bool {
-        prods.v[self.prod].v.len() == self.pos
-    }
     fn inc (&self, prods: &Productions) -> Option<Self> {
         if self.pos < prods.v[self.prod].v.len() {
             Some(Item {
@@ -220,7 +217,7 @@ fn make_state (prods: &Productions, states: &mut States, inherits: HashSet<Item>
 
     let mut edges = HashMap::new();
 
-    // Explore & recurse into edges
+    // Explore: make & recurse into edges
     for item in &s.items {
         if let Some(x) = item.next(prods) {
             let ni = s.get_inheritances(prods, &x);
@@ -256,7 +253,7 @@ mod test {
 
     #[test]
     fn table_test () {
-        let table = Productions::make_test().to_table();
+        let table = Productions::make_test().make_table();
         /*
            |a       |b       |A       |S       |
           0|S      1|S      2|S      4|        |
@@ -267,24 +264,34 @@ mod test {
           5|        |        |        |        |
          */
 
-        assert_eq!(*table[0].get(&ElemT::Token(TokenT::a)).unwrap(), Action::Shift(1));
-        assert_eq!(*table[0].get(&ElemT::Token(TokenT::b)).unwrap(), Action::Shift(2));
-        assert_eq!(*table[0].get(&ElemT::Node(NodeT::A)).unwrap(),   Action::Shift(4));
+        let s = if let Action::Shift(s) = table[0].get(&ElemT::Token(TokenT::b)).unwrap() {
+            *s
+        } else { panic!(); };
+        let r = if let Action::Reduce(p) = table[s].get(&ElemT::Token(TokenT::a)).unwrap() {
+            *p 
+        } else { panic!(); };
+        assert_eq!(r, 1);
+        
 
-        assert_eq!(*table[1].get(&ElemT::Token(TokenT::a)).unwrap(), Action::Shift(1));
-        assert_eq!(*table[1].get(&ElemT::Token(TokenT::b)).unwrap(), Action::Shift(2));
-        assert_eq!(*table[1].get(&ElemT::Node(NodeT::A)).unwrap(),   Action::Shift(3));
+        let s = if let Action::Shift(s) = table[0].get(&ElemT::Token(TokenT::a)).unwrap() {
+            *s
+        } else { panic!(); };
+        let s = if let Action::Shift(s) = table[s].get(&ElemT::Node(NodeT::A)).unwrap() {
+            *s
+        } else { panic!(); };
+        let r = if let Action::Reduce(p) = table[s].get(&ElemT::Token(TokenT::a)).unwrap() {
+            *p 
+        } else { panic!(); };
+        assert_eq!(r, 2);
+        assert!(table[s].get(&ElemT::Token(TokenT::K_LET)).is_none());
 
-        assert_eq!(*table[2].get(&ElemT::Token(TokenT::a)).unwrap(), Action::Reduce(1));
-        assert_eq!(*table[2].get(&ElemT::Token(TokenT::b)).unwrap(), Action::Reduce(1));
-        assert_eq!(*table[2].get(&ElemT::Node(NodeT::A)).unwrap(),   Action::Reduce(1));
 
-        assert_eq!(*table[3].get(&ElemT::Token(TokenT::a)).unwrap(), Action::Reduce(2));
-        assert_eq!(*table[3].get(&ElemT::Token(TokenT::b)).unwrap(), Action::Reduce(2));
-        assert_eq!(*table[3].get(&ElemT::Node(NodeT::A)).unwrap(),   Action::Reduce(2));
-
-        assert_eq!(*table[4].get(&ElemT::Token(TokenT::a)).unwrap(), Action::Shift(1));
-        assert_eq!(*table[4].get(&ElemT::Token(TokenT::b)).unwrap(), Action::Shift(2));
-        assert_eq!(*table[4].get(&ElemT::Node(NodeT::A)).unwrap(),   Action::Shift(5));
+        let s = if let Action::Shift(s) = table[0].get(&ElemT::Node(NodeT::A)).unwrap() {
+            *s
+        } else { panic!(); };
+        let s = if let Action::Shift(s) = table[s].get(&ElemT::Node(NodeT::A)).unwrap() {
+            *s
+        } else { panic!(); }; 
+        assert_eq!(table[s].len(), 0);
     }
 }
