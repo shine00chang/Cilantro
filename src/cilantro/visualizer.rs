@@ -99,14 +99,16 @@ impl Node {
 /// Visually maps tokens to the source string.
 pub fn print_tokens (toks: &Tokens, source: &String) -> Result<String, std::fmt::Error> { 
     let mut f = String::new();
-    let mut i = 0;
-    for tok in toks {
-        while i < tok.start * 3 {
+    let mut cnt = 0;
+    for (i, tok) in toks.iter().enumerate() {
+        while cnt < tok.start * 3 {
             write!(f, " ")?;
-            i += 1;
+            cnt += 1;
         }
         let s = format!("{}", tok.data);
-        i += s.len();
+        let d = 3 * if i != toks.len()-1 { toks[i+1].start - tok.start } else { 100 } - 1;
+        let s = format!("{:<width$.width$}", s, width=d);
+        cnt += s.len();
         write!(f, "{s}")?;
     }
     write!(f, "\n")?;

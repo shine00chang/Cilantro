@@ -170,8 +170,6 @@ impl Productions {
                 break;
             }
         }
-        println!("Begins:\n{:?}", begins);
-        println!("Follows:\n{:?}", follows);
         loop {
             let mut mutated = false;
             for node in NodeT::iter() {
@@ -208,7 +206,6 @@ impl Productions {
                 (key, s)
             })
             .collect();
-        println!("{:?}", out);
         out
     }
 

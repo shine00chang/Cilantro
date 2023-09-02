@@ -100,16 +100,16 @@ fn print_stacks (l: &Vec<(Elem, usize)>, r: &Vec<Elem>) {
     const W: usize = 10;
 
     for (_, s) in l {
-        print!("{:<width$} ", s, width=W);
+        print!("{:<width$.width$} ", s, width=W);
     }
     println!();
 
     for (e, _) in l {
-        print!("{:<width$}", format!("{e}"), width=W);
+        print!("{:<width$.width$} ", format!("{e}"), width=W);
     }
-    print!("| ");
+    print!(" | ");
     for e in r.iter().rev() {
-        print!("{:<width$}", format!("{e}"), width=W);
+        print!("{:<width$.width$} ", format!("{e}"), width=W);
     }
     println!();
 }

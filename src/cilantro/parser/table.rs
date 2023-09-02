@@ -134,7 +134,7 @@ impl States {
         let key = self.v[index].make_hash();
         self.map.insert(key, index);
 
-        println!("{}", self.v.len());
+        //println!("{}", self.v.len());
         index
     }
 
@@ -172,7 +172,7 @@ impl Productions {
 
         make_state(self, &mut states, init_items);
 
-        println!("FINAL STATES:");
+        println!("STATES:");
         states.print(self);
 
         // Make Table
@@ -225,8 +225,10 @@ fn make_state (prods: &Productions, states: &mut States, inherits: HashSet<Item>
     }
 
     let index = states.add(s.clone());
+    /*
     println!("iter:");
     s.print(prods);
+    */
 
     let mut edges = HashMap::new();
 
@@ -238,12 +240,12 @@ fn make_state (prods: &Productions, states: &mut States, inherits: HashSet<Item>
                 if let Some(s) = states.get(&ni) { s }
                 else { make_state(prods, states, ni) };
 
-            println!("add edge: {}, shift{}", x, ns);
+            //println!("add edge: {}, shift{}", x, ns);
             edges.insert(x, Action::Shift(ns));
         } else {
             if let Some(follows) = prods.follows.get(&item.node(&prods)) {
                 for t in follows {
-                    println!("add edge: {}, reduce{}", t, item.prod);
+                    //println!("add edge: {}, reduce{}", t, item.prod);
                     edges.insert(t.clone(), Action::Reduce(item.prod));
                 }
             } else {
