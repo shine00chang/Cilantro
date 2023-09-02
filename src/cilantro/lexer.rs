@@ -131,6 +131,34 @@ fn ident (input: Span) -> IResult<Span, Token> {
     ))(input)
 }
 
+
+fn num_op_p1 (input: Span) -> IResult<Span, Token> {
+    ws(map_res(
+        alt((tag("+"), tag("-"))),
+        |s: Span| -> Result<Token, nom::error::Error<Span>> {
+            Ok(Token {
+                start: s.location_offset(),
+                end: 0,
+                data: TokenData::NUMOP_1(s.fragment().to_string())
+            })
+        }
+    ))(input)
+}
+
+fn num_op_p2 (input: Span) -> IResult<Span, Token> {
+    ws(map_res(
+        alt((tag("*"), tag("/"))),
+        |s: Span| -> Result<Token, nom::error::Error<Span>> {
+            Ok(Token {
+                start: s.location_offset(),
+                end: 0,
+                data: TokenData::NUMOP_2(s.fragment().to_string())
+            })
+        }
+    ))(input)
+}
+
+// Testing Lexers
 fn a (input: Span) -> IResult<Span, Token> {
     ws(map_res(
         tag("a"),
@@ -162,8 +190,7 @@ fn b (input: Span) -> IResult<Span, Token> {
 
 pub fn tokenize (source: String) -> Tokens {
 
-    // NOTE: Ident has to be placed *AFTER* keywords, otherwise it will treat every keyword as an
-    // identifier.
+
     
     let span = Span::new(&source);
     let parsers = (
@@ -174,7 +201,13 @@ pub fn tokenize (source: String) -> Tokens {
         int,
         bol,
         equal,
+        num_op_p1,
+        num_op_p2,
         paren,
+
+        // NOTE: Ident has to be placed *AFTER* keywords, otherwise it will treat every keyword as an
+        // identifier.
+
         keyword("let", TokenData::K_LET),
         ident,
     );
@@ -196,32 +229,52 @@ mod test {
     use super::*;
 
     #[test]
-    fn test () {
-        let s = "let A = 100\n let B = 68_104".to_owned();
-        let v = tokenize(s.clone());
-
-        println!("{}", visualizer::print_tokens(&v, &s).unwrap());
-
-        assert!(v[0].data == TokenData::K_LET);
-        assert!(v[1].data == TokenData::IDENT("A".to_owned()));
-        assert!(v[2].data == TokenData::EQ_1);
-        assert!(v[3].data == TokenData::INT(100));
-        assert!(v[4].data == TokenData::K_LET);
-        assert!(v[5].data == TokenData::IDENT("B".to_owned()));
-        assert!(v[6].data == TokenData::EQ_1);
-        assert!(v[7].data == TokenData::INT(68104));
-    }
-
-    #[test]
-    fn test2 (){
+    fn test1 (){
         let s = "baab".to_owned();
         let v = tokenize(s.clone());
 
         println!("{}", visualizer::print_tokens(&v, &s).unwrap());
+        let v: Vec<_> = v.into_iter().map(|t| t.data).collect();
 
-        assert!(v[0].data == TokenData::b('b'));
-        assert!(v[1].data == TokenData::a('a'));
-        assert!(v[2].data == TokenData::a('a'));
-        assert!(v[3].data == TokenData::b('b'));
+        assert_eq!(v, vec![
+            TokenData::b('b'),
+            TokenData::a('a'),
+            TokenData::a('a'),
+            TokenData::b('b'),
+            TokenData::EOF
+        ]);
+    }
+
+    #[test]
+    fn test2 (){
+        let s = concat!(
+            "let A = 1\n",
+            "let B = 2\n",
+            "print(A + B * B)\n"
+            ).to_owned();
+        let v = tokenize(s.clone());
+
+        println!("{}", visualizer::print_tokens(&v, &s).unwrap());
+        let v: Vec<_> = v.into_iter().map(|t| t.data).collect();
+
+        assert_eq!(v, vec![
+            TokenData::K_LET,
+            TokenData::IDENT("A".to_owned()),
+            TokenData::EQ_1,
+            TokenData::INT(1),
+            TokenData::K_LET,
+            TokenData::IDENT("B".to_owned()),
+            TokenData::EQ_1,
+            TokenData::INT(2),
+            TokenData::IDENT("print".to_owned()),
+            TokenData::PAREN_L,
+            TokenData::IDENT("A".to_owned()),
+            TokenData::NUMOP_1("+".to_owned()),
+            TokenData::IDENT("B".to_owned()),
+            TokenData::NUMOP_2("*".to_owned()),
+            TokenData::IDENT("B".to_owned()),
+            TokenData::PAREN_R,
+            TokenData::EOF
+        ]);
     }
 }

@@ -65,25 +65,47 @@ impl std::fmt::Display for Production {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{} -> ", self.node)?;
         for x in &self.v {
-            write!(f, "{}", x)?;
+            write!(f, "{} ", x)?;
         }
         Ok(())
     } 
 }
 impl Productions {
-    fn new (roots: Vec<NodeT>, v: Vec<Production>) -> Self {
+    fn new (roots: Vec<NodeT>, mut v: Vec<Production>) -> Self {
+
+        // Creates a temporary "ROOT" object & inserts productions 
+        // to make the generation of the FOLLOWS(X) set easier 
+        let mut i = 0;
+        for root in &roots {
+            let p = Production { node: NodeT::ROOT, v: vec![
+                ElemT::Node(root.clone()),
+                ElemT::Node(NodeT::ROOT)
+            ]};
+            v.push(p);
+            i += 1;
+        }
+
         let mut s = Self {
-            roots: roots.into_iter().collect(),
+            roots: vec![NodeT::ROOT].into_iter().collect(),
             v,
             follows: HashMap::new()
         };
         
+        // Remove ROOT
         s.follows = s.make_follows();
+        s.roots = roots.into_iter().collect();
+        s.v.truncate(s.v.len()-i);
         s
     }
 
     /// Generates the FOLLOWS(x) set.
     fn make_follows (&self) -> HashMap<NodeT, HashSet<ElemT>> {
+
+        // Algorithm:
+        // -> Find all elements that a node can begin with.
+        // -> Find all elements that a node can end with.
+        // -> For every node J that starts node I, Add all tokens that could start J to I.
+        // -> For every node J that follows node I, Add all tokens that could start J to I.
 
         let mut begins: HashMap<_, _> = NodeT::iter()
             .map(|n| {
@@ -148,6 +170,8 @@ impl Productions {
                 break;
             }
         }
+        println!("Begins:\n{:?}", begins);
+        println!("Follows:\n{:?}", follows);
         loop {
             let mut mutated = false;
             for node in NodeT::iter() {
@@ -163,8 +187,17 @@ impl Productions {
                 break;
             }
         }
+        for prod in &self.v {
+            let s = follows.get(&prod.node).unwrap().1.clone();
+            if let ElemT::Node(n) = prod.v.last().unwrap() {
+                follows.get_mut(n)
+                    .unwrap().1
+                    .extend(s);
+            }
+        }
 
-        follows.into_iter()
+
+        let out = follows.into_iter()
             .map(|(key, (ns, ts))| {
                 let s = ns.into_iter().map(|n| ElemT::Node(n))
                     .chain(
@@ -174,7 +207,9 @@ impl Productions {
                 
                 (key, s)
             })
-            .collect()
+            .collect();
+        println!("{:?}", out);
+        out
     }
 
 }

@@ -52,7 +52,7 @@ impl Item {
             if self.pos == i {
                 print!(".");
             }
-            print!("{}", p.v[i]);
+            print!("{} ", p.v[i]);
         }
         if self.pos == p.v.len() { 
             println!(".");
@@ -145,7 +145,10 @@ impl States {
     }
 
     fn print (&self, prods: &Productions) {
-        self.v.iter().for_each(|s| s.print(prods));
+        self.v.iter().enumerate().for_each(|(i, s)| {
+            println!("{i}");
+            s.print(prods);
+        });
     }
 }
 

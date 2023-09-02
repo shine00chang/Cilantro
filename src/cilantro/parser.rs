@@ -63,6 +63,8 @@ impl Parser {
             let action = self.table[s].get(&t.t());
             if action.is_none() {
                 // TODO: Report Syntax Error
+                println!("Syntax Error: Parser stack dump:");
+                print_stacks(&l, &r);
                 panic!("Syntax Error?");
             }
             let action = action.unwrap();
@@ -95,7 +97,7 @@ impl Parser {
 }
 
 fn print_stacks (l: &Vec<(Elem, usize)>, r: &Vec<Elem>) {
-    const W: usize = 2;
+    const W: usize = 10;
 
     for (_, s) in l {
         print!("{:<width$} ", s, width=W);
@@ -127,6 +129,7 @@ mod test {
         println!("starting parse");
         let nodes = parser.parse();
         
+        // TODO:
         for node in nodes {
             println!("{}", node);
         }
