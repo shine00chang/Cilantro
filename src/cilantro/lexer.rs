@@ -185,7 +185,7 @@ pub fn tokenize (source: String) -> Tokens {
         panic!("Lexer did not consume the entire string.");
     }
     let mut tokens = res.1;
-    tokens.push(Token{ start: source.len(), end: 0, data: TokenData::EOF});
+    tokens.push(Token{ start: source.len(), end: source.len(), data: TokenData::EOF});
     tokens
 }
 
@@ -213,7 +213,7 @@ mod test {
     }
 
     #[test]
-    fn test2 () {
+    fn test2 (){
         let s = "baab".to_owned();
         let v = tokenize(s.clone());
 

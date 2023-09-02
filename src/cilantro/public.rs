@@ -1,4 +1,4 @@
-pub use super::grammar::{
+pub use super::common::{
     TokenT,
     TokenData,
     NodeT,

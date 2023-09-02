@@ -1,6 +1,5 @@
 mod public;
 mod common;
-mod grammar;
 mod lexer;
 mod parser;
 mod visualizer;

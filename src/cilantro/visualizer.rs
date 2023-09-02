@@ -248,8 +248,8 @@ mod test {
         let s = print_tokens(&toks, &source).unwrap();
 
         let res = concat!(
-            "K_LET       IDENT EQ_1  INT            K_LET       IDENT EQ_1  INT\n",
-            "│           │     │     │              │           │     │     │\n",
+            "K_LET       IDENT EQ_1  INT            K_LET       IDENT EQ_1  INT               EOF\n",
+            "│           │     │     │              │           │     │     │                 │\n",
             "l  e  t     A     =     1  0  0  \\n    l  e  t     B     =     6  8  _  1  0  4  \n"
         );
         println!("{}", res);

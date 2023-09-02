@@ -302,6 +302,6 @@ mod test {
         let s = if let Action::Shift(s) = table[s].get(&ElemT::Node(NodeT::A)).unwrap() {
             *s
         } else { panic!(); }; 
-        assert_eq!(table[s].len(), 0);
+        assert_eq!(*table[s].get(&ElemT::Token(TokenT::EOF)).unwrap(), Action::Reduce(0));
     }
 }
