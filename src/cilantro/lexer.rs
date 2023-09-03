@@ -35,7 +35,7 @@ fn int (input: Span) -> IResult<Span, Token> {
 
             Ok(Token {
                 start: v[0].location_offset(),
-                end: 0,
+                end: v[0].location_offset() + v.last().unwrap().len(),
                 data: TokenData::INT(n)
             })
         }
@@ -52,7 +52,7 @@ fn bol (input: Span) -> IResult<Span, Token> {
 
             Ok(Token {
                 start: s.location_offset(),
-                end: 0,
+                end: s.location_offset() + s.len(),
                 data: TokenData::BOOL(b)
             })
         }
@@ -71,7 +71,7 @@ fn equal (input: Span) -> IResult<Span, Token> {
             };
             Ok(Token {
                 start: v[0].location_offset(),
-                end: 0,
+                end: v[0].location_offset() + v[0].len(),
                 data
             })
         }
@@ -90,7 +90,7 @@ fn paren(input: Span) -> IResult<Span, Token> {
             };
             Ok(Token {
                 start: s.location_offset(),
-                end: 0,
+                end: s.location_offset() + s.len(),
                 data 
             })
         }
@@ -105,7 +105,7 @@ fn keyword<'a>(keyword: &'static str, token: TokenData) -> impl FnMut(Span<'a>) 
         move |s: Span| -> Result<Token, nom::error::Error<Span<'a>>> {
             Ok(Token {
                 start: s.location_offset(),
-                end: 0,
+                end: s.location_offset() + s.len(),
                 data: token.clone()
             })
         }
@@ -124,7 +124,7 @@ fn ident (input: Span) -> IResult<Span, Token> {
         |s: Span| -> Result<Token, nom::error::Error<Span>> {
             Ok(Token {
                 start: s.location_offset(),
-                end: 0,
+                end: s.location_offset() + s.len(),
                 data: TokenData::IDENT(s.into_fragment().to_owned())
             })
         }
@@ -138,7 +138,7 @@ fn num_op_p1 (input: Span) -> IResult<Span, Token> {
         |s: Span| -> Result<Token, nom::error::Error<Span>> {
             Ok(Token {
                 start: s.location_offset(),
-                end: 0,
+                end: s.location_offset() + s.len(),
                 data: TokenData::NUMOP_1(s.fragment().to_string())
             })
         }
@@ -151,7 +151,7 @@ fn num_op_p2 (input: Span) -> IResult<Span, Token> {
         |s: Span| -> Result<Token, nom::error::Error<Span>> {
             Ok(Token {
                 start: s.location_offset(),
-                end: 0,
+                end: s.location_offset() + s.len(),
                 data: TokenData::NUMOP_2(s.fragment().to_string())
             })
         }
@@ -165,7 +165,7 @@ fn a (input: Span) -> IResult<Span, Token> {
         |s: Span| -> Result<Token, nom::error::Error<Span>> {
             Ok(Token {
                 start: s.location_offset(),
-                end: 0,
+                end: s.location_offset() + s.len(),
                 data: TokenData::a('a')
             })
         }
@@ -178,7 +178,7 @@ fn b (input: Span) -> IResult<Span, Token> {
         |s: Span| -> Result<Token, nom::error::Error<Span>> {
             Ok(Token {
                 start: s.location_offset(),
-                end: 0,
+                end: s.location_offset() + s.len(),
                 data: TokenData::b('b')
             })
         }

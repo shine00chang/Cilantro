@@ -18,10 +18,8 @@ pub type Tokens = Vec<Token>;
 
 #[derive(Debug, Clone)]
 pub struct Node {
-/*
-    pub start: Rc<Token>,
-    pub end: Rc<Token>,
-*/
+    pub start: usize,
+    pub end: usize,
     pub data: NodeData,
     pub children: Vec<Elem>
 }
@@ -42,6 +40,18 @@ impl Elem {
         match self {
             Elem::Node(n)  => ElemT::Node(NodeT::from(n.data.clone())),
             Elem::Token(t) => ElemT::Token(TokenT::from(t.data.clone()))
+        }
+    }
+    pub fn start (&self) -> usize {
+        match self {
+            Elem::Node(n)  => n.start, 
+            Elem::Token(t) => t.start
+        }
+    }
+    pub fn end (&self) -> usize {
+        match self {
+            Elem::Node(n)  => n.end, 
+            Elem::Token(t) => t.end
         }
     }
 }

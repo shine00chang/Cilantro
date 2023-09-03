@@ -90,6 +90,8 @@ impl Node {
             }
         };
         Ok(Node {
+            start: v.first().unwrap().start(), 
+            end: v.last().unwrap().end(),
             data,
             children: v,
         })

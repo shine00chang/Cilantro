@@ -10,13 +10,14 @@ pub struct Parser {
     table: ParseTable,
     productions: Productions,
     tokens: Vec<Token>,
+    source: String
 }
 
 impl Parser {
     /// Creates a new parser instance. 
     /// Generates Parser table from production list. 
     /// Edit production list in `/src/cilantro/grammar.rs`
-    pub fn new (tokens: Tokens) -> Self {
+    pub fn new (tokens: Tokens, source: String) -> Self {
         assert!(tokens.len() > 0); 
         let productions = Productions::make();
         let table = productions.make_table();
@@ -24,24 +25,26 @@ impl Parser {
         Self {
             table,
             productions,
-            tokens 
+            tokens,
+            source
         }
     }
 
     #[cfg(test)]
-    pub fn new_test (tokens: Tokens) -> Self {
+    pub fn new_test (tokens: Tokens, source: String) -> Self {
         let productions = Productions::make_test();
         let table = productions.make_table();
 
         Self {
             table,
             productions,
-            tokens 
+            tokens,
+            source
         }
     }
 
     /// Parses the passed soruce.
-    pub fn parse (self) -> Vec<Node> {
+    pub fn parse (mut self) -> Vec<Node> {
         let mut l: Vec<(Elem, usize)> = vec![];
         let mut r: Vec<_> = self.tokens.into_iter().map(|t| Elem::Token(t)).rev().collect();
 
@@ -61,11 +64,13 @@ impl Parser {
             let s = if let Some((_, s)) = l.last() { *s } else { 0 };
 
             let action = self.table[s].get(&t.t());
+            
+            // Unfilled cell in table should mean syntax error
             if action.is_none() {
-                // TODO: Report Syntax Error
-                println!("Syntax Error: Parser stack dump:");
-                print_stacks(&l, &r);
-                panic!("Syntax Error?");
+                // To satisfy borrow checker, since 'tokens' was moved.
+                self.tokens = vec![];
+                self.syntax_error(&l, &r);
+                panic!("syntax error");
             }
             let action = action.unwrap();
             
@@ -87,14 +92,45 @@ impl Parser {
             }
         }
         
-        l.into_iter()
+        let out = l.into_iter()
             .map(|elem| 
                 if let Elem::Node(node) = elem.0 { node }
+                // There should not be a token in the resulting stream.
                 else { panic!("unreachable") }
             )
-            .collect()
+            .collect();
+        out
+    }
+
+    fn syntax_error (&self, l: &Vec<(Elem, usize)>, r: &Vec<Elem>) {
+
+        println!("==Syntax Error==");
+        println!("Parser stack dump:");
+        print_stacks(l, r);
+
+        let (l, s) = l.last().unwrap();
+        let r = r.last().unwrap();
+
+        println!("Error At: {}", l.start());
+        {
+            let a = 0.max(l.start() as i32 -10) as usize;
+            let b = self.source.len().min(r.end()+10);
+            //let mut extra = 0;
+            print!("    ");
+            for c in self.source[a..b].chars() {
+                let c = c.escape_debug().to_string();
+                //extra += c.len()-1;
+                print!("{}", c);
+            }
+            print!("\n    {:w$}", "", w=l.start()-a);
+            println!("{:-<wa$}^{:-<wb$}", "", "", wa=r.start()-l.start(), wb=r.end()-r.start());
+            println!("unexpected token: {}", r.t());
+            let expected: Vec<_> = self.table[*s].iter().map(|(x, _)| x).collect();
+            println!("expected: {:?}", expected);
+        }
     }
 }
+
 
 fn print_stacks (l: &Vec<(Elem, usize)>, r: &Vec<Elem>) {
     const W: usize = 10;
@@ -115,7 +151,6 @@ fn print_stacks (l: &Vec<(Elem, usize)>, r: &Vec<Elem>) {
 }
 
 
-
 #[cfg(test)]
 mod test {
     use super::*;
@@ -125,7 +160,7 @@ mod test {
         let s = "baab".to_owned();
         let toks = tokenize(s.clone());
 
-        let parser = Parser::new_test(toks);
+        let parser = Parser::new_test(toks, s);
         println!("starting parse");
         let nodes = parser.parse();
         
