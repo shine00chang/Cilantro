@@ -54,7 +54,7 @@ impl Parser {
             // Exit condition: If only token left is EOF and the last node it a root
             if r.len() == 1 {
                 if let Elem::Node(node) = &l.last().unwrap().0 {
-                    if self.productions.roots.contains(&NodeT::from(node.data.clone())) {
+                    if self.productions.roots.contains(&node.t) {
                         break;
                     }
                 }
@@ -86,7 +86,7 @@ impl Parser {
                         .into_iter()
                         .map(|x| x.0)
                         .collect();
-                    let n = Node::make(&p.node, elems).unwrap();
+                    let n = Node::make(p.node, elems);
                     r.push(Elem::Node(n));
                 }
             }

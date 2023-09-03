@@ -5,7 +5,7 @@ use strum_macros::{EnumIter, EnumDiscriminants};
 
 #[allow(non_camel_case_types)]
 #[derive(PartialEq, Eq, Debug, Clone, EnumIter, EnumDiscriminants)]
-#[strum_discriminants(derive(Hash, EnumIter))]
+#[strum_discriminants(derive(Hash, EnumIter, EnumIs))]
 #[strum_discriminants(name(TokenT))]
 #[strum_discriminants(allow(non_camel_case_types))]
 pub enum TokenData {
@@ -29,9 +29,8 @@ pub enum TokenData {
 }
 
 
-
-#[derive(PartialEq, Eq, Debug, Clone, EnumIter, EnumDiscriminants)]
-#[strum_discriminants(derive(Hash, EnumIter))]
+#[derive(Debug, Clone, EnumDiscriminants)]
+#[strum_discriminants(derive(Hash, EnumIter, EnumIs))]
 #[strum_discriminants(name(NodeT))]
 pub enum NodeData {
     // FIXED
@@ -40,7 +39,10 @@ pub enum NodeData {
     A { c: char },
     S { x: usize },
 
-    Declaration,
+    Declaration { 
+        ident: String,
+        expr: ChildRef,
+    },
     Expr,
     T1, 
     T2, 
@@ -48,55 +50,6 @@ pub enum NodeData {
     Args,
 }
 
-
-impl Node { 
-    pub fn make (t: &NodeT, v: Vec<Elem>) -> Result<Node, &'static str> {
-        let data = match t {
-            // Testing types
-            NodeT::A => {
-                let c = if let Elem::Token(t) = &v[0] {
-                    match t.data {
-                        TokenData::a(c) => c,
-                        TokenData::b(c) => c,
-                        _ => return Err("false")
-                    }
-                } else { return Err("false") };
-                NodeData::A { c }
-            },
-            NodeT::S => {
-                NodeData::S { x: 10 }
-            },
-            
-            NodeT::Declaration => {
-                NodeData::Declaration
-            },
-            NodeT::Expr => {
-                NodeData::Expr
-            },
-            NodeT::T1 => {
-                NodeData::T1
-            },
-            NodeT::T2 => {
-                NodeData::T2
-            },
-            NodeT::Invoke => {
-                NodeData::Invoke
-            },
-            NodeT::Args => {
-                NodeData::Args
-            },
-            NodeT::ROOT => {
-                NodeData::ROOT
-            }
-        };
-        Ok(Node {
-            start: v.first().unwrap().start(), 
-            end: v.last().unwrap().end(),
-            data,
-            children: v,
-        })
-    }
-}
 
 impl Productions {
     pub fn make () -> Self {

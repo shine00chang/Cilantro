@@ -20,8 +20,40 @@ pub type Tokens = Vec<Token>;
 pub struct Node {
     pub start: usize,
     pub end: usize,
-    pub data: NodeData,
+    pub t: NodeT,
     pub children: Vec<Elem>
+}
+impl Node {
+    pub fn make (t: NodeT, children: Vec<Elem>) -> Node {
+        Node {
+            start: children.first().unwrap().start(), 
+            end: children.last().unwrap().end(),
+            t,
+            children,
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ChildRef {
+    i: usize
+}
+impl ChildRef {
+    pub fn new (i: usize) -> Self {
+        Self { i } 
+    }
+}
+#[derive(Debug, Clone)]
+pub struct LNode {
+    pub start: usize,
+    pub end: usize,
+    pub data: NodeData,
+    pub children: Vec<LElem>
+}
+impl LNode {
+    pub fn get (&self, n: &ChildRef) -> &LElem {
+        &self.children[n.i]
+    }
 }
 
 #[derive(Debug, Clone, Hash, PartialEq, Eq, EnumIs)]
@@ -35,10 +67,17 @@ pub enum Elem {
     Node(Node),
     Token(Token),
 }
+
+#[derive(Debug, Clone)]
+pub enum LElem {
+    Node(LNode),
+    Token(Token),
+}
+
 impl Elem {
     pub fn t (&self) -> ElemT {
         match self {
-            Elem::Node(n)  => ElemT::Node(NodeT::from(n.data.clone())),
+            Elem::Node(n)  => ElemT::Node(NodeT::from(n.t.clone())),
             Elem::Token(t) => ElemT::Token(TokenT::from(t.data.clone()))
         }
     }

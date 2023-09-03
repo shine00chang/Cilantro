@@ -2,6 +2,8 @@ mod public;
 mod common;
 mod lexer;
 mod parser;
+mod semantics;
+mod codegen;
 mod visualizer;
 
 pub use public::*;
@@ -17,10 +19,14 @@ pub fn from_source (source: String) {
     println!("Token Stream:\n{}\n", visualizer::print_tokens(&tokens, &source).unwrap());
 
     let nodes = Parser::new(tokens, source).parse();
-    
-    for node in nodes.iter() {
-        print!("{node}");
-    }
+    println!("Parsed Concrete Sytnax Tree:");
+    nodes.iter().for_each(|n| print!("{n}"));
 
-    //Interpreter::exec(nodes);
+    let nodes = semantics::to_ast(nodes);
+    println!("Abstract Syntax Tree:");
+    // TODO: Make AST/LNode Printer
+
+    let code = codegen::gen(nodes);
+    println!("Generated code:");
+    println!("{code}");
 }

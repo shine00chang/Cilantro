@@ -15,7 +15,7 @@ impl fmt::Display for ElemT {
 impl fmt::Display for Elem {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Elem::Node(n) => write!(f, "{}", n.data),
+            Elem::Node(n) => write!(f, "{}", n.t),
             Elem::Token(t) => write!(f, "{}", t.data)
         }
     }
@@ -54,7 +54,6 @@ impl fmt::Display for Node {
     }
 }
 
-
 impl Node {
     /// Prints out node tree in a vertical graph
     fn ft (&self, f: &mut fmt::Formatter<'_>, prefix: &String) -> fmt::Result {
@@ -65,7 +64,7 @@ impl Node {
             
             let mut p = prefix.clone();
             let c = if p.pop() == Some('│') { "├" } else { "└" };
-            write!(f, "{p}{c}── {}\n", self.data)?;
+            write!(f, "{p}{c}── {}\n", self.t)?;
         }
         
         // Update prefix
@@ -208,19 +207,27 @@ mod test {
                 data: TokenData::b('b')
             };
             let A1 = Node {
-                data: NodeData::A{ c: 'a' },
+                start: 0,
+                end: 0,
+                t: NodeT::A,
                 children: vec![Elem::Token(b2)]
             };
             let A2 = Node {
-                data: NodeData::A { c: 'a' },
+                start: 0,
+                end: 0,
+                t: NodeT::A,
                 children: vec![Elem::Token(a), Elem::Node(A1)]
             };
             let A3 = Node {
-                data: NodeData::A { c: 'a' },
+                start: 0,
+                end: 0,
+                t: NodeT::A,
                 children: vec![Elem::Token(b1)]
             };
             Node {
-                data: NodeData::S { x: 10 },
+                start: 0,
+                end: 0,
+                t: NodeT::S,
                 children: vec![Elem::Node(A2), Elem::Node(A3)]
             }
         };
