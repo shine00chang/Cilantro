@@ -23,11 +23,13 @@ impl Node {
                     .collapse_if_1()
             },
             NodeT::T1 => {
-                self.recurse()
+                self.change_t(NodeT::Expr)
+                    .recurse()
                     .collapse_if_1()
             },
             NodeT::T2 => {
                 self.filter_tok(vec![TokenT::PAREN_L, TokenT::PAREN_R])
+                    .change_t(NodeT::Expr)
                     .recurse()
                     .collapse_if_1()
             },
@@ -44,6 +46,12 @@ impl Node {
                 !set.contains(&t)
             } else { true }
         }).collect();
+        self
+    }
+
+    /// Cast into different NodeT. This is to handle when multiple grammatical nodes refer to the same logical node
+    fn change_t (mut self, t: NodeT) -> Self {
+        self.t = t;
         self
     }
 

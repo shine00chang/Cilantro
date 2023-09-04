@@ -43,11 +43,20 @@ pub enum NodeData {
         ident: String,
         expr: ChildRef,
     },
-    Expr,
+    Expr {
+        t1: ChildRef,
+        t2: ChildRef,
+        op: String, 
+    },
     T1, 
     T2, 
-    Invoke,
-    Args,
+    Invoke {
+        ident: String,
+        args: ChildRef,
+    },
+    Args {
+        v: Vec<ChildRef>
+    }
 }
 
 

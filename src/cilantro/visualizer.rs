@@ -36,7 +36,7 @@ impl fmt::Display for NodeT {
 
 impl fmt::Display for TokenData {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", TokenT::from(self))
+        write!(f, "{:?}", self)
     }
 }
 

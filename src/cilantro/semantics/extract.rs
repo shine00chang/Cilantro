@@ -28,46 +28,73 @@ impl Node {
                     expr
                 }
             },
-            /*
             NodeT::Invoke => {
-                // Call
+                // Get Function name
                 let ident = if let Elem::Token(t) = &self.children[0] {
                     if let TokenData::IDENT(s) = &t.data {
-                        s
+                        s.clone()
                     } else { panic!() }
                 } else { panic!() };
-                func.push(format!("(call ${}", ident));
 
                 // Gen Args 
-                if let Elem::Node(n) = &self.children[1] {
-                    n.codegen(prog, func);
-                }
-                func.push(")".to_owned());
+                let args_n = if let Elem::Node(n) = self.children[1].clone() {
+                    assert!(n.t.is_args());
+                    LElem::Node(n.extract())
+                } else { panic!() };
+                children.push(args_n);
+                let args = ChildRef::new(0);
+
+                NodeData::Invoke { ident, args }
             },
             NodeT::Args => {
-                // Expand each children 
-                for c in &self.children {
-                    c.codegen(prog, func);
+                let mut v = vec![];
+                for (i, child) in self.children.into_iter().enumerate() {
+                    let n = match child {
+                        Elem::Node(n)  => {
+                            assert!(n.t.is_expr());
+                            LElem::Node(n.extract())
+                        },
+                        Elem::Token(t) => LElem::Token(t)
+                    };
+                    children.push(n);
+                    v.push(ChildRef::new(i))
                 }
-            },
+                NodeData::Args{ v }
+           },
             NodeT::Expr => {
                 let op = if let Elem::Token(t) = &self.children[1] {
                     match &t.data {
                         TokenData::NUMOP_1(op) => op,
                         TokenData::NUMOP_2(op) => op,
                         _ => panic!()
-                    }
+                    }.clone()
                 } else { panic!() };
 
-                let a = match &op[..] {
-                    "+" => "(i32.add",
-                    "-" => "(i32.sub",
-                    "*" => "(i32.mul",
-                    "/" => "(i32.div",
-                    _ => panic!()
+                let t1_n = match self.children[0].clone() {
+                    Elem::Node(n)  => {
+                        assert!(n.t.is_expr());
+                        LElem::Node(n.extract())
+                    },
+                    Elem::Token(t) => LElem::Token(t)
                 };
+                let t2_n = match self.children[2].clone() {
+                    Elem::Node(n)  => {
+                        assert!(n.t.is_expr());
+                        LElem::Node(n.extract())
+                    },
+                    Elem::Token(t) => LElem::Token(t)
+                };
+                children.push(t1_n);
+                children.push(t2_n);
+                let t1 = ChildRef::new(0);
+                let t2 = ChildRef::new(1);
+
+                NodeData::Expr{
+                    t1,
+                    t2,
+                    op
+                }
             },
-            */
             _ => panic!("codegen unimplemented")
         };
         LNode { 

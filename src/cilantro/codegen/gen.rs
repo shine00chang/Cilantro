@@ -16,41 +16,24 @@ impl LNode {
                 func.prefix(format!("(local ${} i32)", ident));
 
                 // Expand Expression
-                func.push(format!("(local.set ${}", ident));
+                func.push_s(format!("(local.set ${}", ident));
                 self.get(expr).codegen(prog, func);
-                func.push(")".to_owned());
+                func.push(")");
             },
-            /*
-            NodeData::Invoke => {
-                // Call
-                let ident = if let Elem::Token(t) = &self.children[0] {
-                    if let TokenData::IDENT(s) = &t.data {
-                        s
-                    } else { panic!() }
-                } else { panic!() };
-                func.push(format!("(call ${}", ident));
+            NodeData::Invoke{ ident, args } => {
+                func.push_s(format!("(call ${}", ident));
 
-                // Gen Args 
-                if let Elem::Node(n) = &self.children[1] {
-                    n.codegen(prog, func);
-                }
-                func.push(")".to_owned());
+                self.get(args).codegen(prog, func);
+
+                func.push(")");
             },
-            NodeData::Args => {
+            NodeData::Args{ v } => {
                 // Expand each children 
-                for c in &self.children {
-                    c.codegen(prog, func);
+                for cr in v {
+                    self.get(cr).codegen(prog, func);
                 }
             },
-            NodeData::Expr => {
-                let op = if let Elem::Token(t) = &self.children[1] {
-                    match &t.data {
-                        TokenData::NUMOP_1(op) => op,
-                        TokenData::NUMOP_2(op) => op,
-                        _ => panic!()
-                    }
-                } else { panic!() };
-
+            NodeData::Expr{ op, t1, t2 } => {
                 let a = match &op[..] {
                     "+" => "(i32.add",
                     "-" => "(i32.sub",
@@ -58,20 +41,26 @@ impl LNode {
                     "/" => "(i32.div",
                     _ => panic!()
                 };
+                func.push(a);
+                self.get(t1).codegen(prog, func);
+                self.get(t2).codegen(prog, func);
+                func.push(")");
             },
-            */
-            _ => panic!("codegen unimplemented")
+            _ => panic!("codegen unimplemented for {}", self.data)
         }
     }
 }
 
 impl Token {
     pub fn codegen (&self, prog: &mut Prog, func: &mut Func) {
-        match self.data {
+        match &self.data {
             TokenData::INT(n) => {
-                func.push(format!("(i32.const {})", n));
+                func.push_s(format!("(i32.const {})", n));
+            },
+            TokenData::IDENT(ident) => {
+                func.push_s(format!("(local.get ${})", ident));
             }
-            _ => panic!("codegen unimplemented")
+            _ => panic!("codegen unimplemented for {}", self.data)
         }
     }
 }

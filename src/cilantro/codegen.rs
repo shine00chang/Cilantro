@@ -14,11 +14,11 @@ struct Glob {
     t: u32,
 }
 impl Glob {
-    fn push (&mut self, s: String) {
+    fn push (&mut self, s: &str) {
         for _ in 0..self.t {
             self.v.push_str("  ");
         }
-        self.v.push_str(s.as_str());
+        self.v.push_str(s);
         self.v.push('\n');
         for c in s.chars() {
             match c {
@@ -29,6 +29,7 @@ impl Glob {
         }
     }
 }
+
 
 #[derive(Debug, Clone)]
 struct Func {
@@ -46,7 +47,7 @@ impl Func {
             t: 2
         }
     }
-    fn push (&mut self, s: String) {
+    fn push (&mut self, s: &str) {
         let mut d: i32 = 0;
         for c in s.chars() {
             if c == '(' { d += 1 }
@@ -56,9 +57,12 @@ impl Func {
         for _ in 0..self.t {
             self.v.push_str("  ");
         }
-        self.v.push_str(s.as_str());
+        self.v.push_str(s);
         self.v.push('\n');
         if d > 0 { self.t += d as u32 }
+    }
+    fn push_s (&mut self, s: String) {
+        self.push(s.as_str()); 
     }
     fn prefix (&mut self, s: String) {
         self.p.push_str("    ");
@@ -80,7 +84,6 @@ impl Func {
 }
 
 
-
 pub fn gen (nodes: Vec<LNode>) -> String {
     let mut prog = Prog { 
         global: Glob::default(),
@@ -95,15 +98,12 @@ pub fn gen (nodes: Vec<LNode>) -> String {
     to_string(prog, main)
 }
 
+
 fn to_string(prog: Prog, main: Func) -> String {
     let mut code = String::new();
-    let lib = Prog::lib();
 
     code.push_str("(module\n");
-    code.push_str(&lib.global.v);
-    for f in lib.funcs {
-        code.push_str(&f.to_string());
-    }
+    code.push_str(&Prog::lib());
 
     code.push_str(&prog.global.v);
     for f in prog.funcs {
