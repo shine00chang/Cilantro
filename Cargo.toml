@@ -11,3 +11,5 @@ nom = "7.1.3"
 nom_locate = "4.2.0"
 strum = { version = "0.25.0", features = ["derive"] }
 strum_macros = "0.25.2"
+wasmtime = "12.0.1"
+wasmtime-wasi = "12.0.1"
