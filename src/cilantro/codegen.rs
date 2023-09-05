@@ -1,7 +1,9 @@
-mod lib;
 mod gen;
 
 use super::*;
+
+use std::fs::read_to_string;
+
 
 #[derive(Debug, Clone)]
 struct Prog {
@@ -103,7 +105,7 @@ fn to_string(prog: Prog, main: Func) -> String {
     let mut code = String::new();
 
     code.push_str("(module\n");
-    code.push_str(&Prog::lib());
+    code.push_str(&get_lib());
 
     code.push_str(&prog.global.v);
     for f in prog.funcs {
@@ -115,4 +117,13 @@ fn to_string(prog: Prog, main: Func) -> String {
     code.push_str("  (export \"_start\" (func $_main))\n");
     code.push_str(")");
     code
+}
+
+
+const LIBPATH: &'static str = "lib.wat";
+fn get_lib () -> String {
+    read_to_string(LIBPATH) 
+        .expect(&format!("could not find library file '{}'", LIBPATH))
+        .lines()
+        .fold(String::new(), |mut s, line| { s.push_str(line); s.push('\n'); s })
 }

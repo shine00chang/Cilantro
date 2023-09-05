@@ -1,0 +1,3 @@
+let A = 2
+let B = 3
+print A + B * (B + A)
