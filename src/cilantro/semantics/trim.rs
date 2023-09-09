@@ -2,7 +2,9 @@ use super::*;
 use std::collections::HashSet;
 
 impl Node {
-    pub fn trim (self) -> Elem {
+    /// Recursively removes grammatical elements from the syntax tree.
+    /// Could collapse the element if it contains only one value.
+    pub fn trim (mut self) -> Elem {
         match self.t {
             NodeT::Declaration => {
                 self.filter_tok(vec![TokenT::K_LET, TokenT::EQ_1]) 
@@ -33,7 +35,47 @@ impl Node {
                     .recurse()
                     .collapse_if_1()
             },
-            _ => panic!("none") 
+            NodeT::Statement => {
+                self.recurse()
+                    .collapse_if_1()
+            },
+            NodeT::Function => {
+                self.filter_tok(vec![TokenT::K_FUNC, TokenT::PAREN_L, TokenT::PAREN_R])
+                    .recurse()
+                    .cast()
+            },
+            NodeT::Params => {
+                self.recurse()
+                    .cast()
+            },
+            NodeT::Block => {
+                self = self.filter_tok(vec![TokenT::CURLY_L, TokenT::CURLY_R])
+                    .recurse();
+
+                // Consume child "List", set its children as own.
+                if let Elem::Node(list) = self.children.pop().unwrap() {
+                    self.children = list.children;
+                }
+
+                self.cast()
+            },
+            NodeT::List => {
+                self = self.recurse();
+                // Consume children if children is List
+                // Pop last element out first since we want to move the List (index 0) out instead
+                // of copying it
+                let last = self.children.pop().unwrap();
+                if let Some(elem) = self.children.pop() {
+                    if let Elem::Node(node) = elem {
+                        if node.t == NodeT::List {
+                            self.children.extend(node.children);
+                        }
+                    }
+                }
+                self.children.push(last);
+                self.cast()
+            }
+            _ => panic!("no trimmer implemented for {}", self.t) 
         }
     }
 

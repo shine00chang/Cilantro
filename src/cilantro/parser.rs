@@ -49,7 +49,7 @@ impl Parser {
         let mut r: Vec<_> = self.tokens.into_iter().map(|t| Elem::Token(t)).rev().collect();
 
         loop {
-            print_stacks(&l, &r);
+            //print_stacks(&l, &r);
 
             // Exit condition: If only token left is EOF and the last node it a root
             if r.len() == 1 {
@@ -76,11 +76,11 @@ impl Parser {
             
             match action {
                 Action::Shift(ns) => {
-                    println!("shifting to {}", ns);
+                    //println!("shifting to {}", ns);
                     l.push((r.pop().unwrap(), *ns))
                 }
                 Action::Reduce(p) => {
-                    println!("reducing with {}", p);
+                    //println!("reducing with {}", p);
                     let p = &self.productions.v[*p];
                     let elems = l.split_off(l.len()-p.v.len())
                         .into_iter()

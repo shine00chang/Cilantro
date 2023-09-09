@@ -157,6 +157,7 @@ impl States {
 impl Productions {
     pub fn make_table(&self) -> Vec<HashMap<ElemT, Action>> {
         
+
         // Make State Machine
         let mut states = States {
             v: vec![],
@@ -169,11 +170,13 @@ impl Productions {
                 init_items.insert(Item::new(i));
             }
         }
-
+    
+        println!("Productions:\n{}", self);
+        println!("making state machine...");
         make_state(self, &mut states, init_items);
 
-        println!("STATES:");
-        states.print(self);
+        //println!("STATES:");
+        //states.print(self);
 
         // Make Table
         let mut table: Vec<_> = states.v.into_iter().map(|s| s.edges).collect(); 
@@ -183,8 +186,10 @@ impl Productions {
             table[0].insert(ElemT::Node(root.clone()), Action::Shift(0));
         }
 
+        /*
         println!("PARSING TABLE:");
         println!("{}", visualizer::print_table(&table).unwrap());
+        */
 
         table
     }
@@ -193,42 +198,47 @@ impl Productions {
 
 // Recursively creates state graph.
 fn make_state (prods: &Productions, states: &mut States, inherits: HashSet<Item>) -> usize {
+
+    //println!("{:?}", inherits);
+
     let mut s = State {
         edges: HashMap::new(),
         items: inherits
     };
+
     // Expand
     let mut queue = VecDeque::new();
+    let mut visited = HashSet::new();
+    
     for item in &s.items {
-        if let Some(x) = item.next(prods) {
-            if x.is_node() { 
-                queue.push_back(x);
+        if let Some(ElemT::Node(n)) = item.next(prods) {
+            if !visited.contains(&n) {
+                queue.push_back(n);
+                visited.insert(n);
             }
         }
     }
-    loop {
-        if let Some(x) = queue.pop_front() {
-            if let ElemT::Node(node) = &x {
-                for i in prods.into_node(node) {
-                    let item = Item::new(i);
-                    if let Some(x) = item.next(prods) {
-                        if x.is_node() { 
-                            queue.push_back(x);
-                        }
-                    }
-                    s.items.insert(item);
+    while !queue.is_empty() {
+        let node = queue.pop_front().unwrap();
+        for i in prods.into_node(&node) {
+            let item = Item::new(i);
+            if let Some(ElemT::Node(n)) = item.next(prods) {
+                if !visited.contains(&n) {
+                    queue.push_back(n);
+                    visited.insert(n);
                 }
             }
-        } else {
-            break;
+            s.items.insert(item);
         }
     }
 
     let index = states.add(s.clone());
+    
     /*
     println!("iter:");
     s.print(prods);
     */
+    
 
     let mut edges = HashMap::new();
 

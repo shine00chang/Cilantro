@@ -27,10 +27,10 @@ impl LNode {
 
                 func.push(")");
             },
-            NodeData::Args{ v } => {
+            NodeData::Args => {
                 // Expand each children 
-                for cr in v {
-                    self.get(cr).codegen(prog, func);
+                for elem in &self.children {
+                    elem.codegen(prog, func);
                 }
             },
             NodeData::Expr{ op, t1, t2 } => {

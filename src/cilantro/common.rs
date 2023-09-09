@@ -36,7 +36,7 @@ impl Node {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ChildRef {
-    i: usize
+    pub i: usize
 }
 impl ChildRef {
     pub fn new (i: usize) -> Self {
@@ -119,8 +119,30 @@ impl std::fmt::Display for Production {
         Ok(())
     } 
 }
+impl std::fmt::Display for Productions {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        for p in &self.v {
+            write!(f, "{}\n", p)?;
+        }
+        Ok(())
+    } 
+}
 impl Productions {
-    fn new (roots: Vec<NodeT>, mut v: Vec<Production>) -> Self {
+    /// Creates a Productions instance
+    /// @param roots: root elements
+    /// @param productions: a vector of tuples mapping a list of productions to a node 
+    fn new (roots: Vec<NodeT>, mut productions: Vec<(NodeT, Vec<Vec<ElemT>>)>) -> Self {
+
+        // Create Productions from input
+        let mut v = vec![];
+        for (node, prods) in productions {
+            for prod in prods {
+                v.push(Production {
+                    node,
+                    v: prod
+                });
+            }
+        }
 
         // Creates a temporary "ROOT" object & inserts productions 
         // to make the generation of the FOLLOWS(X) set easier 

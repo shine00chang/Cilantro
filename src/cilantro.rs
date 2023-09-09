@@ -25,9 +25,13 @@ pub fn from_source (source: String) -> std::io::Result<()> {
     println!("Parsed Concrete Sytnax Tree:");
     nodes.iter().for_each(|n| print!("{n}"));
 
-    let nodes = semantics::to_ast(nodes);
+    let nodes = match semantics::to_ast(nodes) {
+        Ok(nodes) => nodes,
+        Err(err) => panic!("Semantic Analysis failed with: {}", err)
+    };
+
     println!("Abstract Syntax Tree:");
-    // TODO: Make AST/LNode Printer
+    nodes.iter().for_each(|n| print!("{n}"));
 
     let code = codegen::gen(nodes);
     println!("Generated code:");

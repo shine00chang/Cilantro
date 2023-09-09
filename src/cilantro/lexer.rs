@@ -5,7 +5,7 @@ use nom::{
     combinator::{map_res, recognize},
     multi::{many1, many0},
     bytes::complete::tag,
-    character::complete::{char, digit1, multispace0, alpha1, alphanumeric1}, 
+    character::complete::{char, digit1, multispace0, alpha1, alphanumeric1, one_of}, 
     sequence::{terminated, delimited, pair}
 };
 
@@ -81,11 +81,13 @@ fn equal (input: Span) -> IResult<Span, Token> {
 
 fn paren(input: Span) -> IResult<Span, Token> {
     ws(map_res(
-        alt((tag("("), tag(")"))),
+        recognize(one_of("(){}")),
         |s: Span| -> Result<Token, nom::error::Error<Span>> {
             let data = match s.fragment() {
                 &"(" => TokenData::PAREN_L,
                 &")" => TokenData::PAREN_R,
+                &"{" => TokenData::CURLY_L,
+                &"}" => TokenData::CURLY_R,
                 _   => unreachable!()
             };
             Ok(Token {
@@ -134,7 +136,7 @@ fn ident (input: Span) -> IResult<Span, Token> {
 
 fn num_op_p1 (input: Span) -> IResult<Span, Token> {
     ws(map_res(
-        alt((tag("+"), tag("-"))),
+        recognize(one_of("+-")),
         |s: Span| -> Result<Token, nom::error::Error<Span>> {
             Ok(Token {
                 start: s.location_offset(),
@@ -207,8 +209,9 @@ pub fn tokenize (source: String) -> Tokens {
 
         // NOTE: Ident has to be placed *AFTER* keywords, otherwise it will treat every keyword as an
         // identifier.
-
         keyword("let", TokenData::K_LET),
+        keyword("func", TokenData::K_FUNC),
+
         ident,
     );
     let mut parser = many1(alt(parsers));

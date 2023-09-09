@@ -54,6 +54,27 @@ impl fmt::Display for Node {
     }
 }
 
+impl fmt::Display for LNode {
+    /// Prints out node tree in a vertical graph. Wraps Node::ft
+    fn fmt (&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        self.ft(f, &String::from(" "))
+    }
+}
+
+impl fmt::Display for TypeError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        // TODO: 
+        Ok(())
+    }
+}
+
+impl fmt::Display for ChildRef {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.i)
+    }
+}
+
+
 impl Node {
     /// Prints out node tree in a vertical graph
     fn ft (&self, f: &mut fmt::Formatter<'_>, prefix: &String) -> fmt::Result {
@@ -92,47 +113,119 @@ impl Node {
         }
         Ok(())
     }
+} 
+
+impl LNode {
+    /// Prints out node tree in a vertical graph
+    fn ft (&self, f: &mut fmt::Formatter<'_>, prefix: &String) -> fmt::Result {
+        
+        // Print self
+        {
+            // If the last character is │, not last child, use ├, else use └
+            
+            let mut p = prefix.clone();
+            let c = if p.pop() == Some('│') { "├" } else { "└" };
+            write!(f, "{p}{c}── {:?}\n", self.data)?;
+        }
+        
+        // Update prefix
+        let mut np = prefix.clone();
+        np.push_str("   │");
+
+        // For each children
+        for i in 0..self.children.len() 
+        {
+            // If is last children, no need to inlcude line for next child in prefix
+            if i == self.children.len()-1 {
+                np = prefix.clone();
+                np.push_str("    ");
+            }
+
+            // If child is node, recurse. Else, print.
+            match &self.children[i] {
+                LElem::Node(n)  => n.ft(f, &np)?, 
+                LElem::Token(t) => {
+                    let mut p = np.clone();
+                    let c = if p.pop() == Some('│') { "├" } else { "└" };
+                    write!(f, "{p}{c}── {}\n", t.data)?;
+                }
+            }
+        }
+        Ok(())
+    }
 }
 
 
 /// Visually maps tokens to the source string.
 pub fn print_tokens (toks: &Tokens, source: &String) -> Result<String, std::fmt::Error> { 
-    let mut f = String::new();
-    let mut cnt = 0;
-    for (i, tok) in toks.iter().enumerate() {
-        while cnt < tok.start * 3 {
-            write!(f, " ")?;
-            cnt += 1;
-        }
-        let s = format!("{}", tok.data);
-        let d = 3 * if i != toks.len()-1 { toks[i+1].start - tok.start } else { 100 } - 1;
-        let s = format!("{:<width$.width$}", s, width=d);
-        cnt += s.len();
-        write!(f, "{s}")?;
-    }
-    write!(f, "\n")?;
 
-    let mut i = 0;
-    for tok in toks {
-        while i < tok.start * 3 {
-            write!(f, " ")?;
-            i += 1;
+    const WRAP: usize = 150;
+    const K: usize = 4;
+
+    let mut f = String::new();
+    let mut char_i = 0;
+    let mut tok_s = 0;
+    let mut line_start = 0;
+
+    while tok_s < toks.len() {
+        let mut i = line_start;
+        let mut tok_i = tok_s;
+
+        while tok_i < toks.len() && i - line_start < WRAP {
+            let tok = &toks[tok_i];
+            while i < tok.start * K {
+                write!(f, " ")?;
+                i += 1;
+            }
+            if i - line_start > WRAP { break }
+            let mut s = format!("{}", tok.data);
+            if tok_i != toks.len() - 1 {
+                let d = K * (toks[tok_i+1].start - tok.start - 1);
+                s = format!("{:<width$.width$}", s, width=d);
+            }
+            i += s.len();
+
+            write!(f, "{s}")?;
+
+            tok_i += 1;
         }
-        write!(f, "│")?;
-        i += 1;
+        write!(f, "\n")?;
+        
+        let mut i = line_start;
+        let mut tok_i = tok_s;
+
+        while tok_i < toks.len() {
+            let tok = &toks[tok_i];
+            while i < tok.start * K {
+                write!(f, " ")?;
+                i += 1;
+            }
+            if i - line_start > WRAP { break }
+
+            write!(f, "│")?;
+            i += 1;
+            
+            tok_i += 1;
+        }
+        write!(f, "\n")?;
+        
+        
+        while char_i < source.len() && char_i * K - line_start < WRAP {
+            write!(f, "{:<width$}", &source[char_i..char_i+1].escape_debug().to_string(), width=K)?;
+            char_i += 1;
+        }
+        write!(f, "\n")?;
+
+        tok_s = tok_i;
+        line_start = char_i * K;
     }
-    write!(f, "\n")?;
-    
-    for c in source.chars() {
-        write!(f, "{:<3}", c.escape_debug().to_string())?;
-    }
-    write!(f, "\n")?;
     Ok(f)
 }
 
 
 
 use super::parser::ParseTable;
+use super::semantics::TypeError;
 use strum::IntoEnumIterator;
 /// Prints out & formats parsing table
 pub fn print_table (table: &ParseTable) -> Result<String, std::fmt::Error> { 
@@ -235,11 +328,11 @@ mod test {
         let s = concat!(
                 "└── S\n",
                 "    ├── A\n",
-                "    │   ├── a\n",
+                "    │   ├── a('a')\n",
                 "    │   └── A\n",
-                "    │       └── b\n",
+                "    │       └── b('b')\n",
                 "    └── A\n",
-                "        └── b\n",
+                "        └── b('b')\n",
             );
 
         let o = format!("{n}");
@@ -257,11 +350,11 @@ mod test {
         let s = print_tokens(&toks, &source).unwrap();
 
         let res = concat!(
-            "K_LET       IDENT EQ_1  INT            K_LET       IDENT EQ_1  INT               EOF\n",
+            "K_LET       IDENT EQ_1  INT(100)       K_LET       IDENT EQ_1  INT(68104)        EOF\n",
             "│           │     │     │              │           │     │     │                 │\n",
             "l  e  t     A     =     1  0  0  \\n    l  e  t     B     =     6  8  _  1  0  4  \n"
         );
-        println!("{}", res);
+        println!("{}", s);
 
         assert_eq!(s, res);
     }
