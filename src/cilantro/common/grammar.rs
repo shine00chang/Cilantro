@@ -29,6 +29,7 @@ pub enum TokenData {
     PAREN_R,
     CURLY_L,
     CURLY_R,
+    COMMA, 
 }
 
 
@@ -99,9 +100,10 @@ impl Productions {
             ),
             ( 
                 NodeT::Params,
-                vec![ vec![
-                    ElemT::Token(TokenT::IDENT)
-                ] ]
+                vec![ 
+                    vec![ElemT::Token(TokenT::IDENT)],
+                    vec![ElemT::Node(NodeT::Params), ElemT::Token(TokenT::COMMA), ElemT::Token(TokenT::IDENT)]
+                ]
             ),
             (
                 NodeT::Function,

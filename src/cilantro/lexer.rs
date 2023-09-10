@@ -79,15 +79,16 @@ fn equal (input: Span) -> IResult<Span, Token> {
 }
 
 
-fn paren(input: Span) -> IResult<Span, Token> {
+fn symbols(input: Span) -> IResult<Span, Token> {
     ws(map_res(
-        recognize(one_of("(){}")),
+        recognize(one_of("(){},")),
         |s: Span| -> Result<Token, nom::error::Error<Span>> {
             let data = match s.fragment() {
                 &"(" => TokenData::PAREN_L,
                 &")" => TokenData::PAREN_R,
                 &"{" => TokenData::CURLY_L,
                 &"}" => TokenData::CURLY_R,
+                &"," => TokenData::COMMA,
                 _   => unreachable!()
             };
             Ok(Token {
@@ -205,7 +206,7 @@ pub fn tokenize (source: String) -> Tokens {
         equal,
         num_op_p1,
         num_op_p2,
-        paren,
+        symbols,
 
         // NOTE: Ident has to be placed *AFTER* keywords, otherwise it will treat every keyword as an
         // identifier.

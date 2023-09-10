@@ -1,5 +1,4 @@
-func f1 (c) {
-  let d = 1
+func f1 (c, d) {
   let j = c + d
   print_int(j)
 }
