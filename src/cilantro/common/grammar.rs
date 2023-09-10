@@ -35,6 +35,7 @@ pub enum TokenData {
 #[derive(Debug, Clone, EnumDiscriminants)]
 #[strum_discriminants(derive(Hash, EnumIter, EnumIs))]
 #[strum_discriminants(name(NodeT))]
+#[allow(dead_code)]
 pub enum NodeData {
     // FIXED
     ROOT,

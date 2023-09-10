@@ -131,7 +131,7 @@ impl Productions {
     /// Creates a Productions instance
     /// @param roots: root elements
     /// @param productions: a vector of tuples mapping a list of productions to a node 
-    fn new (roots: Vec<NodeT>, mut productions: Vec<(NodeT, Vec<Vec<ElemT>>)>) -> Self {
+    fn new (roots: Vec<NodeT>, productions: Vec<(NodeT, Vec<Vec<ElemT>>)>) -> Self {
 
         // Create Productions from input
         let mut v = vec![];

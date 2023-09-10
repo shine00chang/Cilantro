@@ -21,7 +21,7 @@ fn main () {
         file.read_to_string(&mut contents).expect("Could not read file");
         contents
     };
-    cilantro::from_source(source);
+    cilantro::from_source(source).expect("Failed to compile.");
 
     let engine = Engine::default();
     let mut linker = Linker::new(&engine);

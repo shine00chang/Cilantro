@@ -62,7 +62,7 @@ impl fmt::Display for LNode {
 }
 
 impl fmt::Display for TypeError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    fn fmt(&self, _f: &mut fmt::Formatter<'_>) -> fmt::Result {
         // TODO: 
         Ok(())
     }
