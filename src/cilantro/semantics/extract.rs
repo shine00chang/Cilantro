@@ -43,13 +43,14 @@ impl Node {
                 } else { panic!() };
 
                 // Gen Args 
-                let args = if let Elem::Node(n) = self.children[1].clone() {
-                    assert!(n.t.is_args());
-                    LElem::Node(n.extract())
-                } else { panic!() };
-                children.push(args);
-                let args = ChildRef::new(0);
-
+                let args = if self.children.len() > 1 {
+                    if let Elem::Node(n) = self.children[1].clone() {
+                        assert!(n.t.is_args());
+                        let args = LElem::Node(n.extract());
+                        children.push(args);
+                        Some(ChildRef::new(0))
+                    } else { panic!() }
+                } else { None };
                 NodeData::Invoke { ident, args }
             },
             NodeT::Args => {
@@ -111,35 +112,39 @@ impl Node {
                 }
             },
             NodeT::Function => {
+                let mut i = 0;
+                let mut ref_i = 0;
+
                 // Get symbol
-                let ident = if let Elem::Token(t) = &self.children[0] {
+                let ident = if let Elem::Token(t) = &self.children[i] {
                     if let TokenData::IDENT(s) = &t.data {
                         s.clone()
                     } else { panic!() }
                 } else { panic!() };
+                i += 1;
 
                 // Get Params 
-                let params = match self.children[1].clone() {
-                    Elem::Node(n)  => {
-                        assert!(n.t.is_params());
-                        LElem::Node(n.extract())
-                    },
-                    Elem::Token(t) => LElem::Token(t)
-                };
+                let params = if let Elem::Node(n) = self.children[i].clone() {
+                    if n.t.is_params() {
+                        children.push(LElem::Node(n.extract()));
+                        let out = Some(ChildRef::new(ref_i));
+                        ref_i += 1;
+                        i += 1;
+                        out
+                    } else { None }
+                } else { panic!() };
 
                 // Get block
-                let block = match self.children[2].clone() {
-                    Elem::Node(n)  => {
-                        assert!(n.t.is_block());
-                        LElem::Node(n.extract())
-                    },
-                    Elem::Token(t) => LElem::Token(t)
-                };
+                let block = if let Elem::Node(n) = self.children[i].clone() {
+                    if n.t.is_block() {
+                        children.push(LElem::Node(n.extract()));
+                        let out = Some(ChildRef::new(ref_i));
+                        ref_i += 1;
+                        i += 1;
+                        out
+                    } else { None }
+                } else { panic!() };
 
-                children.push(params);
-                children.push(block);
-                let params = ChildRef::new(0);
-                let block = ChildRef::new(1);
                 NodeData::Function {
                     ident,
                     params,

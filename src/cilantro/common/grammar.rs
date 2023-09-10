@@ -47,8 +47,8 @@ pub enum NodeData {
     Statement,
     Function {
         ident: String,
-        params: ChildRef,
-        block: ChildRef,
+        params: Option<ChildRef>,
+        block: Option<ChildRef>,
     },
     Block,
     List,
@@ -65,7 +65,7 @@ pub enum NodeData {
     T2, 
     Invoke {
         ident: String,
-        args: ChildRef,
+        args: Option<ChildRef>,
     },
     Args,
     Params { v: Vec<String> },
@@ -107,14 +107,23 @@ impl Productions {
             ),
             (
                 NodeT::Function,
-                vec![ vec![
-                    ElemT::Token(TokenT::K_FUNC),
-                    ElemT::Token(TokenT::IDENT),
-                    ElemT::Token(TokenT::PAREN_L),
-                    ElemT::Node(NodeT::Params),
-                    ElemT::Token(TokenT::PAREN_R),
-                    ElemT::Node(NodeT::Block),
-                ] ]
+                vec![
+                    vec![
+                        ElemT::Token(TokenT::K_FUNC),
+                        ElemT::Token(TokenT::IDENT),
+                        ElemT::Token(TokenT::PAREN_L),
+                        ElemT::Node(NodeT::Params),
+                        ElemT::Token(TokenT::PAREN_R),
+                        ElemT::Node(NodeT::Block),
+                    ],
+                    vec![
+                        ElemT::Token(TokenT::K_FUNC),
+                        ElemT::Token(TokenT::IDENT),
+                        ElemT::Token(TokenT::PAREN_L),
+                        ElemT::Token(TokenT::PAREN_R),
+                        ElemT::Node(NodeT::Block),
+                    ],
+                ]
             ),
             (
                 NodeT::Statement,
@@ -135,18 +144,26 @@ impl Productions {
             ),
             (
                 NodeT::Invoke,
-                vec![ vec![
-                    ElemT::Token(TokenT::IDENT),
-                    ElemT::Token(TokenT::PAREN_L),
-                    ElemT::Node(NodeT::Args),
-                    ElemT::Token(TokenT::PAREN_R)
-                ] ]
+                vec![ 
+                    vec![
+                        ElemT::Token(TokenT::IDENT),
+                        ElemT::Token(TokenT::PAREN_L),
+                        ElemT::Node(NodeT::Args),
+                        ElemT::Token(TokenT::PAREN_R)
+                    ],
+                    vec![
+                        ElemT::Token(TokenT::IDENT),
+                        ElemT::Token(TokenT::PAREN_L),
+                        ElemT::Token(TokenT::PAREN_R)
+                    ]
+                ]
             ),
             ( 
                 NodeT::Args,
-                vec![ vec![
-                    ElemT::Node(NodeT::Expr)
-                ] ]
+                vec![ 
+                    vec![ElemT::Node(NodeT::Expr)],
+                    vec![ElemT::Node(NodeT::Args), ElemT::Token(TokenT::COMMA), ElemT::Node(NodeT::Expr)]
+                ]
             ),
             // Expressions
             ( 

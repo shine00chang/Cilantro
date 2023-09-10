@@ -16,10 +16,14 @@ impl LNode {
                 let mut func = Func::new(format!("func ${}", ident));
 
                 // Params
-                self.get(params).codegen(prog, &mut func);
+                if let Some(params) = params { 
+                    self.get(params).codegen(prog, &mut func);
+                }
                 
                 // Block
-                self.get(block).codegen(prog, &mut func);
+                if let Some(block) = block { 
+                    self.get(block).codegen(prog, &mut func);
+                }
 
                 prog.add_func(func);
             },
@@ -45,7 +49,9 @@ impl LNode {
             NodeData::Invoke{ ident, args } => {
                 func.push_s(format!("(call ${}", ident));
 
-                self.get(args).codegen(prog, func);
+                if let Some(args) = args {
+                    self.get(args).codegen(prog, func);
+                }
 
                 func.push(")");
             },

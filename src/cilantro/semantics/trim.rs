@@ -17,7 +17,9 @@ impl Node {
                     .cast()
             },
             NodeT::Args => {
-                self.recurse()
+                self.filter_tok(vec![TokenT::COMMA])
+                    .recurse()
+                    .into_list()
                     .cast()
             },
             NodeT::Expr => {
@@ -44,10 +46,6 @@ impl Node {
                     .recurse()
                     .cast()
             },
-            NodeT::Params => {
-                self.recurse()
-                    .cast()
-            },
             NodeT::Block => {
                 self = self.filter_tok(vec![TokenT::CURLY_L, TokenT::CURLY_R])
                     .recurse();
@@ -60,20 +58,15 @@ impl Node {
                 self.cast()
             },
             NodeT::List => {
-                self = self.recurse();
-                // Consume children if children is List
-                // Pop last element out first since we want to move the List (index 0) out instead
-                // of copying it
-                let last = self.children.pop().unwrap();
-                if let Some(elem) = self.children.pop() {
-                    if let Elem::Node(node) = elem {
-                        if node.t == NodeT::List {
-                            self.children.extend(node.children);
-                        }
-                    }
-                }
-                self.children.push(last);
-                self.cast()
+                self.recurse()
+                    .into_list()
+                    .cast()
+            },
+            NodeT::Params => {
+                self.filter_tok(vec![TokenT::COMMA])
+                    .recurse()
+                    .into_list()
+                    .cast() 
             }
             _ => panic!("no trimmer implemented for {}", self.t) 
         }
@@ -103,6 +96,20 @@ impl Node {
             Elem::Node(n)      => n.trim(),
             e @ Elem::Token(_) => e
         }).collect();
+        self
+    }
+    
+    /// Collapse the recursive list assuming the structure: X -> Xx | x
+    fn into_list (mut self) -> Self {
+        let last = self.children.pop().unwrap();
+        if let Some(elem) = self.children.pop() {
+            if let Elem::Node(node) = elem {
+                if node.t == self.t {
+                    self.children.extend(node.children);
+                }
+            }
+        }
+        self.children.push(last);
         self
     }
 
