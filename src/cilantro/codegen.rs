@@ -6,9 +6,14 @@ use std::fs::read_to_string;
 
 
 #[derive(Debug, Clone)]
-struct Prog {
+pub struct Prog {
     global: Glob,
     funcs: Vec<Func>,
+}
+impl Prog {
+    fn add_func (&mut self, f: Func) {
+        self.funcs.push(f)
+    }
 }
 #[derive(Debug, Clone, Default)]
 struct Glob {
@@ -34,7 +39,7 @@ impl Glob {
 
 
 #[derive(Debug, Clone)]
-struct Func {
+pub struct Func {
     sig: String,
     p: String,
     v: String,
@@ -73,7 +78,7 @@ impl Func {
     }
     fn to_string (self) -> String {
         let mut code = String::new();
-        code.push_str("  ");
+        code.push_str("  (");
         code.push_str(&self.sig);
         code.push('\n');
         code.push_str(&self.p);
@@ -91,7 +96,7 @@ pub fn gen (nodes: Vec<LNode>) -> String {
         global: Glob::default(),
         funcs: vec![]
     };
-    let mut main = Func::new("(func $_main".to_owned());
+    let mut main = Func::new("func $_main".to_owned());
 
     for node in nodes {
         node.codegen(&mut prog, &mut main);

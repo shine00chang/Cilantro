@@ -1,7 +1,7 @@
 use super::*;
 
 impl LElem {
-    pub fn codegen (&self, prog: &mut Prog, func: &mut Func) {
+    fn codegen (&self, prog: &mut Prog, func: &mut Func) {
         match self {
             LElem::Node(n)  => n.codegen(prog, func),
             LElem::Token(t) => t.codegen(prog, func)
@@ -11,6 +11,28 @@ impl LElem {
 impl LNode {
     pub fn codegen (&self, prog: &mut Prog, func: &mut Func) {
         match &self.data {
+            NodeData::Function { ident, params, block } => {
+                // Create function
+                let mut func = Func::new(format!("func ${}", ident));
+
+                // Params
+                self.get(params).codegen(prog, &mut func);
+                
+                // Block
+                self.get(block).codegen(prog, &mut func);
+
+                prog.add_func(func);
+            },
+            NodeData::Params{ v }=> {
+                for param in v {
+                    func.prefix(format!("(param ${param} i32)"))
+                }
+            },
+            NodeData::Block => {
+                for child in &self.children {
+                    child.codegen(prog, func);
+                }
+            }
             NodeData::Declaration{ ident, expr } => {
                 // Declare local variable
                 func.prefix(format!("(local ${} i32)", ident));
@@ -52,7 +74,7 @@ impl LNode {
 }
 
 impl Token {
-    pub fn codegen (&self, prog: &mut Prog, func: &mut Func) {
+    fn codegen (&self, _prog: &mut Prog, func: &mut Func) {
         match &self.data {
             TokenData::INT(n) => {
                 func.push_s(format!("(i32.const {})", n));

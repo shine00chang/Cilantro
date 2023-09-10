@@ -1,0 +1,8 @@
+func f1 (c) {
+  let d = 1
+  let j = c + d
+  print_int(j)
+}
+
+let B = 3
+f1(B)
