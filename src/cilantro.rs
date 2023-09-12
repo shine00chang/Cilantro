@@ -21,14 +21,11 @@ pub fn from_source (source: String) -> std::io::Result<()> {
     let tokens = lexer::tokenize(source.clone());
     println!("Token Stream:\n{}\n", visualizer::print_tokens(&tokens, &source).unwrap());
 
-    let nodes = Parser::new(tokens, source).parse();
+    let nodes = Parser::new(tokens, &source).parse();
     println!("Parsed Concrete Sytnax Tree:");
     nodes.iter().for_each(|n| print!("{n}"));
 
-    let nodes = match semantics::to_ast(nodes) {
-        Ok(nodes) => nodes,
-        Err(err) => panic!("Semantic Analysis failed with: {}", err)
-    };
+    let nodes = semantics::to_ast(&source, nodes);
 
     println!("Abstract Syntax Tree:");
     nodes.iter().for_each(|n| print!("{n}"));

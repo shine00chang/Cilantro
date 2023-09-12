@@ -5,6 +5,7 @@
   (memory 1)
   (export "memory" (memory 0))
 
+  ;;@signature $print_int : void (i32)
   (func $print_int (param $x i32)
     (local $i i32)
     (local $j i32)

@@ -60,26 +60,54 @@ fn bol (input: Span) -> IResult<Span, Token> {
 }
 
 
-fn equal (input: Span) -> IResult<Span, Token> {
+// Used by library signature annotation parser.
+pub fn types (input: Span) -> IResult<Span, Token> {
     ws(map_res(
-        many1(tag("=")),
-        |v: Vec<Span>| -> Result<Token, nom::error::Error<Span>> {
-            let data = match v.len() {
-                1 => TokenData::EQ_1, 
-                2 => TokenData::EQ_2, 
+        alt((
+            tag("i32"),
+            tag("void"), 
+        )),
+        |s: Span| -> Result<Token, nom::error::Error<Span>> {
+            let t = match s.fragment() {
+                &"i32"  => Type::Int,
+                &"void" => Type::Void,
                 _   => unreachable!()
             };
             Ok(Token {
-                start: v[0].location_offset(),
-                end: v[0].location_offset() + v[0].len(),
-                data
+                start: s.location_offset(),
+                end: s.location_offset() + s.len(),
+                data: TokenData::TYPE(t)
             })
         }
     ))(input)
 }
 
 
-fn symbols(input: Span) -> IResult<Span, Token> {
+fn symbols (input: Span) -> IResult<Span, Token> {
+    ws(map_res(
+        alt((
+            tag("="),
+            tag("=="), 
+            tag("->")
+        )),
+        |s: Span| -> Result<Token, nom::error::Error<Span>> {
+            let data = match s.fragment() {
+                &"="  => TokenData::EQ_1,
+                &"==" => TokenData::EQ_2,
+                &"->" => TokenData::ARROW,
+                _   => unreachable!()
+            };
+            Ok(Token {
+                start: s.location_offset(),
+                end: s.location_offset() + s.len(),
+                data 
+            })
+        }
+    ))(input)
+}
+
+
+fn characters (input: Span) -> IResult<Span, Token> {
     ws(map_res(
         recognize(one_of("(){},")),
         |s: Span| -> Result<Token, nom::error::Error<Span>> {
@@ -193,25 +221,25 @@ fn b (input: Span) -> IResult<Span, Token> {
 
 pub fn tokenize (source: String) -> Tokens {
 
-
-    
     let span = Span::new(&source);
     let parsers = (
         // Tests
         a,
         b,
 
-        int,
-        bol,
-        equal,
+        symbols,
+        characters,
         num_op_p1,
         num_op_p2,
-        symbols,
+        types,
+        int,
+        bol,
 
         // NOTE: Ident has to be placed *AFTER* keywords, otherwise it will treat every keyword as an
         // identifier.
         keyword("let", TokenData::K_LET),
         keyword("func", TokenData::K_FUNC),
+        keyword("return", TokenData::K_RETURN),
 
         ident,
     );

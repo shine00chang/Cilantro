@@ -5,11 +5,9 @@ mod type_check;
 
 use super::*;
 
-pub struct TypeError {
+pub use type_check::TypeError;
 
-}
-
-pub fn to_ast (nodes: Vec<Node>) -> Result<Vec<LNode>, TypeError> {
+pub fn to_ast (source: &String, nodes: Vec<Node>) -> Vec<LNode> {
     
     // Trim unecessary grammar elements.
     let mut nodes: Vec<_> = nodes.into_iter().map(|n| {
@@ -30,10 +28,12 @@ pub fn to_ast (nodes: Vec<Node>) -> Result<Vec<LNode>, TypeError> {
     let nodes: Vec<_> = nodes.into_iter().map(|n| n.extract()).collect();
 
     // Type checking
-    for node in &nodes {
-        node.type_check()?;
+    if let Err(err) = type_check::type_check(&nodes) {
+        let out = String::new();
+        err.print(source);
+        println!("{out}");
     }
 
-    Ok(nodes)
+    nodes
 }
 

@@ -8,7 +8,7 @@ impl Node {
     /// primitive value.
     /// Removes any extracted children. New children array should only include those refered to by
     /// a ChildRef 
-    pub fn extract (self) -> LNode {
+    pub fn extract (mut self) -> LNode {
         let mut children = vec![];
         let data = match self.t {
             NodeT::Declaration => {
@@ -21,7 +21,7 @@ impl Node {
 
                 let expr = match self.children[1].clone() {
                     Elem::Node(n)  => {
-                        assert!(n.t.is_expr());
+                        assert!(n.t.is_evaluable());
                         LElem::Node(n.extract())
                     },
                     Elem::Token(t) => LElem::Token(t)
@@ -34,6 +34,19 @@ impl Node {
                     expr
                 }
             },
+            NodeT::Return => {
+                // Get Expression
+                let expr = self.children.pop().unwrap();
+                assert!(expr.t().is_evaluable());
+                match expr { 
+                    Elem::Node(n)  => children.push(LElem::Node(n.extract())),
+                    Elem::Token(t) => children.push(LElem::Token(t))
+                }
+
+                let expr = ChildRef::new(0);
+
+                NodeData::Return { expr }
+            }
             NodeT::Invoke => {
                 // Get Function name
                 let ident = if let Elem::Token(t) = &self.children[0] {
@@ -46,8 +59,7 @@ impl Node {
                 let args = if self.children.len() > 1 {
                     if let Elem::Node(n) = self.children[1].clone() {
                         assert!(n.t.is_args());
-                        let args = LElem::Node(n.extract());
-                        children.push(args);
+                        children.push(LElem::Node(n.extract()));
                         Some(ChildRef::new(0))
                     } else { panic!() }
                 } else { None };
@@ -57,7 +69,7 @@ impl Node {
                 for child in self.children.into_iter() {
                     let n = match child {
                         Elem::Node(n)  => {
-                            assert!(n.t.is_expr());
+                            n.t.is_evaluable();
                             LElem::Node(n.extract())
                         },
                         Elem::Token(t) => LElem::Token(t)
@@ -88,14 +100,14 @@ impl Node {
 
                 let t1 = match self.children[0].clone() {
                     Elem::Node(n)  => {
-                        assert!(n.t.is_expr());
+                        assert!(n.t.is_evaluable());
                         LElem::Node(n.extract())
                     },
                     Elem::Token(t) => LElem::Token(t)
                 };
                 let t2 = match self.children[2].clone() {
                     Elem::Node(n)  => {
-                        assert!(n.t.is_expr());
+                        assert!(n.t.is_evaluable());
                         LElem::Node(n.extract())
                     },
                     Elem::Token(t) => LElem::Token(t)
@@ -132,22 +144,30 @@ impl Node {
                         i += 1;
                         out
                     } else { None }
-                } else { panic!() };
+                } else { None };
 
-                // Get block
+                // Get Return Type 
+                let r_type = if let Elem::Token(t) = self.children[i].clone() {
+                    if let TokenData::TYPE(t) = t.data {
+                        t
+                    } else { panic!() }
+                } else { panic!() };
+                i += 1;
+
+                // Get Block
                 let block = if let Elem::Node(n) = self.children[i].clone() {
-                    if n.t.is_block() {
-                        children.push(LElem::Node(n.extract()));
-                        let out = Some(ChildRef::new(ref_i));
-                        ref_i += 1;
-                        i += 1;
-                        out
-                    } else { None }
+                    assert!(n.t.is_block());
+                    children.push(LElem::Node(n.extract()));
+                    let out =ChildRef::new(ref_i);
+                    ref_i += 1;
+                    i += 1;
+                    out
                 } else { panic!() };
 
                 NodeData::Function {
                     ident,
                     params,
+                    r_type,
                     block,
                 }
             },

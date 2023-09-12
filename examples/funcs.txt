@@ -1,10 +1,9 @@
-func f1 (i, j) {
-  print_int(i + j)
-  f2()
+func f1 (i) -> i32 {
+  return f2() + i
 }
 
-func f2 () {
-  print_int(2)
+func f2 () -> i32 {
+  return 1
 }
 
-f1(3, 4)
+print_int(f1(4))

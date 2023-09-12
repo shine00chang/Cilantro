@@ -6,18 +6,18 @@ pub use table::ParseTable;
 
 
 /// Parser object. Contains parser table, productions, and source.
-pub struct Parser {
+pub struct Parser<'a> {
     table: ParseTable,
     productions: Productions,
     tokens: Vec<Token>,
-    source: String
+    source: &'a str 
 }
 
-impl Parser {
+impl<'a> Parser<'a> {
     /// Creates a new parser instance. 
     /// Generates Parser table from production list. 
     /// Edit production list in `/src/cilantro/grammar.rs`
-    pub fn new (tokens: Tokens, source: String) -> Self {
+    pub fn new (tokens: Tokens, source: &'a str) -> Self {
         assert!(tokens.len() > 0); 
         let productions = Productions::make();
         let table = productions.make_table();
@@ -31,7 +31,7 @@ impl Parser {
     }
 
     #[cfg(test)]
-    pub fn new_test (tokens: Tokens, source: String) -> Self {
+    pub fn new_test (tokens: Tokens, source: &'a str) -> Self {
         let productions = Productions::make_test();
         let table = productions.make_table();
 
@@ -113,17 +113,37 @@ impl Parser {
 
         println!("Error At: {}", l.start());
         {
-            let a = 0.max(l.start() as i32 -10) as usize;
-            let b = self.source.len().min(r.end()+10);
-            //let mut extra = 0;
+            // Get Segment
+            let mut a = l.start();
+            for _ in 0..5 {
+                if self.source.as_bytes()[a].is_ascii_control() { 
+                    a += 1;
+                    break 
+                }
+                a -= 1;
+                if a == 0 { break }
+            }
+            let mut b = r.end();
+            for _ in 0..15 {
+                if b == self.source.len() || self.source.as_bytes()[b].is_ascii_control() { 
+                    b -= 1;
+                    break
+                }
+                b += 1;
+            }
+            // Segment
             print!("    ");
             for c in self.source[a..b].chars() {
-                let c = c.escape_debug().to_string();
-                //extra += c.len()-1;
+                assert!(!c.is_ascii_control());
+                let c = c.escape_debug();
                 print!("{}", c);
-            }
-            print!("\n    {:w$}", "", w=l.start()-a);
-            println!("{:-<wa$}^{:-<wb$}", "", "", wa=r.start()-l.start(), wb=r.end()-r.start());
+            } 
+            print!("...\n");
+            // Underline
+            print!("    {:w$}", "", w=l.start()-a);
+            print!("{:-<wa$}^{:-<wb$}\n", "", "", wa=r.start()-l.start(), wb=r.end()-r.start());
+
+            // Note
             println!("unexpected token: {}", r.t());
             let expected: Vec<_> = self.table[*s].iter().map(|(x, _)| x).collect();
             println!("expected: {:?}", expected);
@@ -160,7 +180,7 @@ mod test {
         let s = "baab".to_owned();
         let toks = tokenize(s.clone());
 
-        let parser = Parser::new_test(toks, s);
+        let parser = Parser::new_test(toks, &s);
         println!("starting parse");
         let nodes = parser.parse();
         

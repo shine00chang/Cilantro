@@ -11,19 +11,23 @@ impl LElem {
 impl LNode {
     pub fn codegen (&self, prog: &mut Prog, func: &mut Func) {
         match &self.data {
-            NodeData::Function { ident, params, block } => {
+            NodeData::Function { ident, params, r_type, block } => {
                 // Create function
                 let mut func = Func::new(format!("func ${}", ident));
-
+                
                 // Params
                 if let Some(params) = params { 
                     self.get(params).codegen(prog, &mut func);
                 }
-                
+
+                // Write return type
+                match r_type {
+                    Type::Int => func.prefix("(result i32)".to_owned()),
+                    Type::Void => (),
+                }               
+
                 // Block
-                if let Some(block) = block { 
-                    self.get(block).codegen(prog, &mut func);
-                }
+                self.get(block).codegen(prog, &mut func);
 
                 prog.add_func(func);
             },
@@ -45,6 +49,9 @@ impl LNode {
                 func.push_s(format!("(local.set ${}", ident));
                 self.get(expr).codegen(prog, func);
                 func.push(")");
+            },
+            NodeData::Return{ expr } => {
+                self.get(expr).codegen(prog, func);
             },
             NodeData::Invoke{ ident, args } => {
                 func.push_s(format!("(call ${}", ident));

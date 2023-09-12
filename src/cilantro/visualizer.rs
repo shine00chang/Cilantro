@@ -61,16 +61,63 @@ impl fmt::Display for LNode {
     }
 }
 
-impl fmt::Display for TypeError {
-    fn fmt(&self, _f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        // TODO: 
-        Ok(())
-    }
-}
-
 impl fmt::Display for ChildRef {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.i)
+    }
+}
+
+impl fmt::Display for Type {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{:?}", self)
+    }
+}
+
+impl TypeError {
+    pub fn print(self, source: &String) {
+        print!("=== Type Error ===\n");
+        
+        let line = {
+            let end = source.len().min(self.start+10);
+            &source[self.start..end]
+        };
+        print!("Error at: {}\n", self.start);
+        print!("    {}", line);
+        {
+            // Get start & end of line slice
+            let mut a = self.start;
+            for _ in 0..5 {
+                if source.as_bytes()[a].is_ascii_control() { 
+                    a += 1;
+                    break 
+                }
+                a -= 1;
+                if a == 0 { break }
+            }
+            let mut b = self.start;
+            for _ in 0..10 {
+                if b == source.len() || source.as_bytes()[b].is_ascii_control() { 
+                    b -= 1;
+                    break
+                }
+                b += 1;
+            }
+
+            print!("    ");
+            for c in source[a..b].chars() {
+                assert!(!c.is_ascii_control());
+                let c = c.escape_debug();
+                print!("{}", c);
+            }
+
+            // Underline
+            print!("\n    {:w$}^", "", w=self.start-a);
+            print!("{:-<w$}", "", w=5);
+
+            // Note
+            if let Some(expected) = self.expected { print!("expected type: {}\n", expected) }
+            if let Some(found)    = self.found    { print!("   found type: {}\n", found) }
+        }
     }
 }
 

@@ -1,5 +1,5 @@
 mod grammar;
-pub use grammar::{NodeT, NodeData, TokenT, TokenData};
+pub use grammar::{NodeT, NodeData, TokenT, TokenData, Type};
 
 use strum_macros::EnumIs;
 use strum::IntoEnumIterator;
@@ -73,7 +73,6 @@ pub enum LElem {
     Node(LNode),
     Token(Token),
 }
-
 impl Elem {
     pub fn t (&self) -> ElemT {
         match self {
@@ -91,6 +90,27 @@ impl Elem {
         match self {
             Elem::Node(n)  => n.end, 
             Elem::Token(t) => t.end
+        }
+    }
+}
+impl LElem {
+    pub fn start (&self) -> usize {
+        match self {
+            LElem::Node(n)  => n.start, 
+            LElem::Token(t) => t.start
+        }
+    }
+    pub fn end (&self) -> usize {
+        match self {
+            LElem::Node(n)  => n.end, 
+            LElem::Token(t) => t.end
+        }
+    }
+    pub fn downcast_node (&self) -> &LNode {
+        if let Self::Node(n) = self {
+            n
+        } else {
+            panic!("downcasting to node failed. Check callstack");
         }
     }
 }
@@ -282,3 +302,13 @@ impl Productions {
 
 }
 
+
+use std::fs::read_to_string;
+const LIBPATH: &'static str = "lib.wat";
+/// Returns the native library as a string.
+pub fn get_lib () -> String {
+    read_to_string(LIBPATH) 
+        .expect(&format!("could not find library file '{}'", LIBPATH))
+        .lines()
+        .fold(String::new(), |mut s, line| { s.push_str(line); s.push('\n'); s })
+}

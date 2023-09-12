@@ -2,8 +2,6 @@ mod gen;
 
 use super::*;
 
-use std::fs::read_to_string;
-
 
 #[derive(Debug, Clone)]
 pub struct Prog {
@@ -124,11 +122,3 @@ fn to_string(prog: Prog, main: Func) -> String {
     code
 }
 
-
-const LIBPATH: &'static str = "lib.wat";
-fn get_lib () -> String {
-    read_to_string(LIBPATH) 
-        .expect(&format!("could not find library file '{}'", LIBPATH))
-        .lines()
-        .fold(String::new(), |mut s, line| { s.push_str(line); s.push('\n'); s })
-}

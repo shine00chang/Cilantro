@@ -2,6 +2,17 @@ use super::*;
 use strum_macros::{EnumIter, EnumDiscriminants};
 
 
+#[derive(PartialEq, Eq, Debug, Clone)]
+pub enum Type {
+    Void,
+    Int
+}
+impl Default for Type {
+    fn default() -> Self {
+        Self::Void
+    }
+}
+
 
 #[allow(non_camel_case_types)]
 #[derive(PartialEq, Eq, Debug, Clone, EnumIter, EnumDiscriminants)]
@@ -17,6 +28,8 @@ pub enum TokenData {
 
     K_LET,
     K_FUNC,
+    K_RETURN,
+
     EQ_1,
     EQ_2,
     IDENT(String),
@@ -24,12 +37,14 @@ pub enum TokenData {
     BOOL(bool),
     NUMOP_1(String),
     NUMOP_2(String),
+    TYPE(Type),
     
     PAREN_L,
     PAREN_R,
     CURLY_L,
     CURLY_R,
     COMMA, 
+    ARROW,
 }
 
 
@@ -48,7 +63,8 @@ pub enum NodeData {
     Function {
         ident: String,
         params: Option<ChildRef>,
-        block: Option<ChildRef>,
+        r_type: Type,
+        block: ChildRef,
     },
     Block,
     List,
@@ -56,6 +72,7 @@ pub enum NodeData {
         ident: String,
         expr: ChildRef,
     },
+    Return { expr: ChildRef },
     Expr {
         t1: ChildRef,
         t2: ChildRef,
@@ -71,6 +88,30 @@ pub enum NodeData {
     Params { v: Vec<String> },
 }
 
+impl NodeT {
+    pub fn is_evaluable (&self) -> bool {
+        match self {
+            NodeT::Expr | NodeT::Invoke => true,
+            _ => false,
+        }
+    }
+}
+impl TokenT {
+    pub fn is_evaluable (&self) -> bool {
+        match self {
+            TokenT::INT | TokenT::IDENT => true,
+            _ => false,
+        }
+    }
+}
+impl ElemT {
+    pub fn is_evaluable (&self) -> bool {
+        match self {
+            ElemT::Node(t)  => t.is_evaluable(),
+            ElemT::Token(t) => t.is_evaluable()
+        }
+    }
+}
 
 impl Productions {
     pub fn make () -> Self {
@@ -114,6 +155,8 @@ impl Productions {
                         ElemT::Token(TokenT::PAREN_L),
                         ElemT::Node(NodeT::Params),
                         ElemT::Token(TokenT::PAREN_R),
+                        ElemT::Token(TokenT::ARROW), 
+                        ElemT::Token(TokenT::TYPE), 
                         ElemT::Node(NodeT::Block),
                     ],
                     vec![
@@ -121,6 +164,8 @@ impl Productions {
                         ElemT::Token(TokenT::IDENT),
                         ElemT::Token(TokenT::PAREN_L),
                         ElemT::Token(TokenT::PAREN_R),
+                        ElemT::Token(TokenT::ARROW), 
+                        ElemT::Token(TokenT::TYPE),
                         ElemT::Node(NodeT::Block),
                     ],
                 ]
@@ -130,10 +175,17 @@ impl Productions {
                 vec![
                     vec![ElemT::Node(NodeT::Declaration)],
                     vec![ElemT::Node(NodeT::Block)],
-                    vec![ElemT::Node(NodeT::Invoke)]
+                    vec![ElemT::Node(NodeT::Invoke)],
+                    vec![ElemT::Node(NodeT::Return)]
                 ]
             ),
             ( 
+                NodeT::Return,
+                vec![ vec![ 
+                    ElemT::Token(TokenT::K_RETURN),
+                    ElemT::Node(NodeT::Expr)
+                ] ]
+            ),           ( 
                 NodeT::Declaration,
                 vec![ vec![ 
                     ElemT::Token(TokenT::K_LET),
@@ -183,6 +235,7 @@ impl Productions {
             ( 
                 NodeT::T2,
                 vec![
+                    vec![ ElemT::Node(NodeT::Invoke) ],
                     vec![ ElemT::Token(TokenT::INT) ],
                     vec![ ElemT::Token(TokenT::IDENT) ],
                     vec![ ElemT::Token(TokenT::PAREN_L), ElemT::Node(NodeT::Expr), ElemT::Token(TokenT::PAREN_R) ]

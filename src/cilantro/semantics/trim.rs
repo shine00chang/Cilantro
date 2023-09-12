@@ -11,6 +11,11 @@ impl Node {
                     .recurse()
                     .cast()
             },
+            NodeT::Return => {
+                self.filter_tok(vec![TokenT::K_RETURN])
+                    .recurse()
+                    .cast()
+            },
             NodeT::Invoke => {
                 self.filter_tok(vec![TokenT::PAREN_L, TokenT::PAREN_R])
                     .recurse()
@@ -42,7 +47,7 @@ impl Node {
                     .collapse_if_1()
             },
             NodeT::Function => {
-                self.filter_tok(vec![TokenT::K_FUNC, TokenT::PAREN_L, TokenT::PAREN_R])
+                self.filter_tok(vec![TokenT::K_FUNC, TokenT::PAREN_L, TokenT::PAREN_R, TokenT::ARROW])
                     .recurse()
                     .cast()
             },
