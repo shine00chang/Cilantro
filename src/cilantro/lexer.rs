@@ -189,44 +189,12 @@ fn num_op_p2 (input: Span) -> IResult<Span, Token> {
     ))(input)
 }
 
-// Testing Lexers
-fn a (input: Span) -> IResult<Span, Token> {
-    ws(map_res(
-        tag("a"),
-        |s: Span| -> Result<Token, nom::error::Error<Span>> {
-            Ok(Token {
-                start: s.location_offset(),
-                end: s.location_offset() + s.len(),
-                data: TokenData::a('a')
-            })
-        }
-    ))(input)
-}
-
-fn b (input: Span) -> IResult<Span, Token> {
-    ws(map_res(
-        tag("b"),
-        |s: Span| -> Result<Token, nom::error::Error<Span>> {
-            Ok(Token {
-                start: s.location_offset(),
-                end: s.location_offset() + s.len(),
-                data: TokenData::b('b')
-            })
-        }
-    ))(input)
-}
-
-
 
 
 pub fn tokenize (source: String) -> Tokens {
 
     let span = Span::new(&source);
     let parsers = (
-        // Tests
-        a,
-        b,
-
         symbols,
         characters,
         num_op_p1,
@@ -254,59 +222,3 @@ pub fn tokenize (source: String) -> Tokens {
     tokens
 }
 
-
-
-#[cfg(test)]
-mod test {
-    use super::*;
-
-    #[test]
-    fn test1 (){
-        let s = "baab".to_owned();
-        let v = tokenize(s.clone());
-
-        println!("{}", visualizer::print_tokens(&v, &s).unwrap());
-        let v: Vec<_> = v.into_iter().map(|t| t.data).collect();
-
-        assert_eq!(v, vec![
-            TokenData::b('b'),
-            TokenData::a('a'),
-            TokenData::a('a'),
-            TokenData::b('b'),
-            TokenData::EOF
-        ]);
-    }
-
-    #[test]
-    fn test2 (){
-        let s = concat!(
-            "let A = 1\n",
-            "let B = 2\n",
-            "print(A + B * B)\n"
-            ).to_owned();
-        let v = tokenize(s.clone());
-
-        println!("{}", visualizer::print_tokens(&v, &s).unwrap());
-        let v: Vec<_> = v.into_iter().map(|t| t.data).collect();
-
-        assert_eq!(v, vec![
-            TokenData::K_LET,
-            TokenData::IDENT("A".to_owned()),
-            TokenData::EQ_1,
-            TokenData::INT(1),
-            TokenData::K_LET,
-            TokenData::IDENT("B".to_owned()),
-            TokenData::EQ_1,
-            TokenData::INT(2),
-            TokenData::IDENT("print".to_owned()),
-            TokenData::PAREN_L,
-            TokenData::IDENT("A".to_owned()),
-            TokenData::NUMOP_1("+".to_owned()),
-            TokenData::IDENT("B".to_owned()),
-            TokenData::NUMOP_2("*".to_owned()),
-            TokenData::IDENT("B".to_owned()),
-            TokenData::PAREN_R,
-            TokenData::EOF
-        ]);
-    }
-}

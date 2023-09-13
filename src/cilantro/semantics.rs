@@ -32,6 +32,7 @@ pub fn to_ast (source: &String, nodes: Vec<Node>) -> Vec<LNode> {
         let out = String::new();
         err.print(source);
         println!("{out}");
+        panic!();
     }
 
     nodes

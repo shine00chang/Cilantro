@@ -115,7 +115,7 @@ impl<'a> Parser<'a> {
         {
             // Get Segment
             let mut a = l.start();
-            for _ in 0..5 {
+            for _ in 0..20 {
                 if self.source.as_bytes()[a].is_ascii_control() { 
                     a += 1;
                     break 
@@ -124,7 +124,7 @@ impl<'a> Parser<'a> {
                 if a == 0 { break }
             }
             let mut b = r.end();
-            for _ in 0..15 {
+            for _ in 0..20 {
                 if b == self.source.len() || self.source.as_bytes()[b].is_ascii_control() { 
                     b -= 1;
                     break

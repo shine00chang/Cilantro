@@ -77,16 +77,11 @@ impl TypeError {
     pub fn print(self, source: &String) {
         print!("=== Type Error ===\n");
         
-        let line = {
-            let end = source.len().min(self.start+10);
-            &source[self.start..end]
-        };
         print!("Error at: {}\n", self.start);
-        print!("    {}", line);
         {
             // Get start & end of line slice
             let mut a = self.start;
-            for _ in 0..5 {
+            for _ in 0..20 {
                 if source.as_bytes()[a].is_ascii_control() { 
                     a += 1;
                     break 
@@ -95,9 +90,8 @@ impl TypeError {
                 if a == 0 { break }
             }
             let mut b = self.start;
-            for _ in 0..10 {
+            for _ in 0..20 {
                 if b == source.len() || source.as_bytes()[b].is_ascii_control() { 
-                    b -= 1;
                     break
                 }
                 b += 1;
