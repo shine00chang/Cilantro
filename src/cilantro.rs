@@ -2,6 +2,7 @@ mod public;
 mod common;
 mod lexer;
 mod parser;
+mod stdlib;
 mod semantics;
 mod codegen;
 mod visualizer;

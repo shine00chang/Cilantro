@@ -1,5 +1,3 @@
-mod lib;
-
 use super::*;
 use std::collections::HashMap;
 
@@ -20,9 +18,9 @@ impl TypeError {
 
 pub type FuncSig = (Vec<Type>, Type);
 #[derive(Debug, Default)]
-struct TypeTable {
-    vars: HashMap<String, Type>,
-    funcs: HashMap<String, FuncSig>
+pub struct TypeTable {
+    pub vars: HashMap<String, Type>,
+    pub funcs: HashMap<String, FuncSig>
 }
 impl TypeTable {
     fn define_f (&mut self, ident: &String, t: (Vec<Type>, Type)) {

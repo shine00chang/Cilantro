@@ -5,7 +5,9 @@ mod type_check;
 
 use super::*;
 
-pub use type_check::TypeError;
+// TypeTable exposed for annotation parser
+// TypeError exposed for visualizer
+pub use type_check::{TypeTable, TypeError};
 
 pub fn to_ast (source: &String, nodes: Vec<Node>) -> Vec<LNode> {
     
