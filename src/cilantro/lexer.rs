@@ -4,7 +4,7 @@ use nom::{
     error::ParseError,
     combinator::{map_res, recognize},
     multi::{many1, many0},
-    bytes::complete::tag,
+    bytes::complete::{tag, take_until},
     character::complete::{char, digit1, multispace0, alpha1, alphanumeric1, one_of}, 
     sequence::{terminated, delimited, pair}
 };
@@ -31,7 +31,7 @@ fn int (input: Span) -> IResult<Span, Token> {
         ),
         |v: Vec<Span>| -> Result<Token, std::num::ParseIntError> {
             let s = v.iter().fold(String::new(), |mut a, i| {a.push_str(i); a});
-            let n = s.parse::<i32>()?;
+            let n = s.parse::<i64>()?;
 
             Ok(Token {
                 start: v[0].location_offset(),
@@ -59,18 +59,34 @@ fn bol (input: Span) -> IResult<Span, Token> {
     ))(input)
 }
 
+fn str_lit (input: Span) -> IResult<Span, Token> {
+    ws(map_res(
+//        delimited(char('"'), not_line_ending, char('"')),
+        delimited(char('"'), take_until("\""), char('"')),
+        |s: Span| -> Result<Token, std::str::ParseBoolError> {
+            Ok(Token {
+                start: s.location_offset(),
+                end: s.location_offset() + s.len(),
+                data: TokenData::STR_LIT(s.to_string())
+            })
+        }
+    ))(input)
+}
+
 
 // Used by library signature annotation parser.
 pub fn types (input: Span) -> IResult<Span, Token> {
     ws(map_res(
         alt((
-            tag("i32"),
+            tag("i64"),
             tag("void"), 
+            tag("string"),
         )),
         |s: Span| -> Result<Token, nom::error::Error<Span>> {
             let t = match s.fragment() {
-                &"i32"  => Type::Int,
+                &"i64"  => Type::Int,
                 &"void" => Type::Void,
+                &"string" => Type::String,
                 _   => unreachable!()
             };
             Ok(Token {
@@ -202,6 +218,7 @@ pub fn tokenize (source: String) -> Tokens {
         types,
         int,
         bol,
+        str_lit,
 
         // NOTE: Ident has to be placed *AFTER* keywords, otherwise it will treat every keyword as an
         // identifier.

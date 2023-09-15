@@ -120,7 +120,7 @@ impl Node {
                 NodeData::Expr{
                     t1,
                     t2,
-                    op
+                    op,
                 }
             },
             NodeT::Function => {

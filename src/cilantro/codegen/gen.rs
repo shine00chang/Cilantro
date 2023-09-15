@@ -22,8 +22,9 @@ impl LNode {
 
                 // Write return type
                 match r_type {
-                    Type::Int => func.prefix("(result i32)".to_owned()),
+                    Type::Int => func.prefix("(result i64)".to_owned()),
                     Type::Void => (),
+                    Type::String => panic!("String output not implemented")
                 }               
 
                 // Block
@@ -33,7 +34,7 @@ impl LNode {
             },
             NodeData::Params{ v }=> {
                 for param in v {
-                    func.prefix(format!("(param ${param} i32)"))
+                    func.prefix(format!("(param ${param} i64)"))
                 }
             },
             NodeData::Block => {
@@ -42,12 +43,15 @@ impl LNode {
                 }
             }
             NodeData::Declaration{ ident, expr } => {
+
+                let expr = self.get(expr);
+
                 // Declare local variable
-                func.prefix(format!("(local ${} i32)", ident));
+                func.prefix(format!("(local ${ident} i64)"));
 
                 // Expand Expression
                 func.push_s(format!("(local.set ${}", ident));
-                self.get(expr).codegen(prog, func);
+                expr.codegen(prog, func);
                 func.push(")");
             },
             NodeData::Return{ expr } => {
@@ -70,10 +74,10 @@ impl LNode {
             },
             NodeData::Expr{ op, t1, t2 } => {
                 let a = match &op[..] {
-                    "+" => "(i32.add",
-                    "-" => "(i32.sub",
-                    "*" => "(i32.mul",
-                    "/" => "(i32.div",
+                    "+" => "(i64.add",
+                    "-" => "(i64.sub",
+                    "*" => "(i64.mul",
+                    "/" => "(i64.div",
                     _ => panic!()
                 };
                 func.push(a);
@@ -87,13 +91,24 @@ impl LNode {
 }
 
 impl Token {
-    fn codegen (&self, _prog: &mut Prog, func: &mut Func) {
+    fn codegen (&self, prog: &mut Prog, func: &mut Func) {
         match &self.data {
             TokenData::INT(n) => {
-                func.push_s(format!("(i32.const {})", n));
+                func.push_s(format!("(i64.const {})", n));
             },
             TokenData::IDENT(ident) => {
                 func.push_s(format!("(local.get ${})", ident));
+            }
+            TokenData::STR_LIT(str) => {
+                // Make literal in linear memory
+                let ptr = prog.add_str_lit(str);
+
+                // Write string pointer representation
+                func.push(&format!("(i64.const {})", str.len()));
+                func.push("(i64.const 32)");
+                func.push("(i64.rotr)");
+                func.push(&format!("(i64.const {})", ptr));
+                func.push("(i64.add)");
             }
             _ => panic!("codegen unimplemented for {}", self.data)
         }

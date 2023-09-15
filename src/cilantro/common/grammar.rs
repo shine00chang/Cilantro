@@ -5,7 +5,8 @@ use strum_macros::{EnumIter, EnumDiscriminants};
 #[derive(PartialEq, Eq, Debug, Clone)]
 pub enum Type {
     Void,
-    Int
+    Int,
+    String,
 }
 impl Default for Type {
     fn default() -> Self {
@@ -33,7 +34,8 @@ pub enum TokenData {
     EQ_1,
     EQ_2,
     IDENT(String),
-    INT(i32),
+    INT(i64),
+    STR_LIT(String),
     BOOL(bool),
     NUMOP_1(String),
     NUMOP_2(String),
@@ -99,7 +101,7 @@ impl NodeT {
 impl TokenT {
     pub fn is_evaluable (&self) -> bool {
         match self {
-            TokenT::INT | TokenT::IDENT => true,
+            TokenT::INT | TokenT::IDENT | TokenT::STR_LIT => true,
             _ => false,
         }
     }
@@ -238,6 +240,7 @@ impl Productions {
                     vec![ ElemT::Node(NodeT::Invoke) ],
                     vec![ ElemT::Token(TokenT::INT) ],
                     vec![ ElemT::Token(TokenT::IDENT) ],
+                    vec![ ElemT::Token(TokenT::STR_LIT) ],
                     vec![ ElemT::Token(TokenT::PAREN_L), ElemT::Node(NodeT::Expr), ElemT::Token(TokenT::PAREN_R) ]
                 ],
             ),

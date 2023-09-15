@@ -1,0 +1,7 @@
+func f1 () -> i64 {
+  let a = 0
+  return a + 3
+}
+
+let foo = f1() + "hello world!"
+print(foo)

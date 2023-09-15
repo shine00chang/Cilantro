@@ -1,6 +1,7 @@
 use super::*;
 use std::collections::HashMap;
 
+#[derive(Debug)]
 pub struct TypeError {
     pub start: usize,
     pub msg: String,
@@ -45,7 +46,7 @@ impl TypeTable {
         if let Some(t) = self.vars.get(ident) {
             t
         } else {
-            panic!("function type not found for '{}'. Should've been caught in scope annotations", ident);
+            panic!("variable type not found for '{}'. Should've been caught in scope annotations", ident);
         }    
     }
 }
@@ -123,10 +124,11 @@ impl LNode {
                         ))
                     }
 
-                    // Check each arg's type
+                    // TODO: Parameter/Argument Typing
                     for (i, arg) in args.children.iter().enumerate() {
                         let arg_t = arg.type_check(table)?;
                         let sig = table.get_f(ident);
+                        /*
                         if arg_t != sig.0[i] {
                             return Err( TypeError::new(
                                 arg.start(),
@@ -135,6 +137,7 @@ impl LNode {
                                 arg_t
                             ));
                         }
+                        */
                     }
                 }
                 // Return function signature
@@ -154,10 +157,12 @@ impl LNode {
             },
             NodeData::Function { ident, params, r_type, block } => {
 
-                // Get parameter types 
+                // TODO: parameter Typing
                 let param_t = if let Some(params) = params {
                     let params = self.get(params).downcast_node();
-                    params.children.iter().map(|e| e.type_check(table)).collect::<Result<_, _>>()?
+                    if let NodeData::Params { v } = &params.data {
+                        vec![Type::Void; v.len()]
+                    } else { panic!() }
                 } else { vec![] };
 
                 // Set signature
@@ -177,9 +182,8 @@ impl LNode {
 impl Token {
     fn type_check (&self, table: &mut TypeTable) -> Type {
         match &self.data {
-            TokenData::INT(_) => {
-                Type::Int
-            },
+            TokenData::INT(_) => Type::Int,
+            TokenData::STR_LIT(_) => Type::String,
             TokenData::IDENT(ident) => {
                 table.get_v(ident).clone()
             }

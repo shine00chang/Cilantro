@@ -1,0 +1,13 @@
+func telemetry (label, val) -> void {
+  print(label)
+  print64(val)
+}
+
+let orangeLbl = "oranges: "
+let oranges = 59
+
+let bananaLbl = "apples: "
+let bananas = 6
+
+telemetry(orangeLbl, oranges)
+telemetry(bananaLbl, bananas)

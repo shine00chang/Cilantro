@@ -1,9 +1,9 @@
-func f1 (i) -> i32 {
+func f1 (i) -> i64 {
   return f2() + i
 }
 
-func f2 () -> i32 {
+func f2 () -> i64 {
   return 1
 }
 
-print_int(f1(4))
+print64(f1(4))

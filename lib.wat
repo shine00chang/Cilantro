@@ -5,7 +5,6 @@
   (memory 1)
   (export "memory" (memory 0))
 
-  ;;@signature $print_int : void (i32)
   (func $print32 (param $x i32)
     (local $i i32)
     (local $j i32)
@@ -86,7 +85,7 @@
     (drop)
   )
 
-  ;;@signature $print_int : void (i64)
+  ;;@signature $print64 : void (i64)
   (func $print64 (param $x i64)
     (local $i i32)
     (local $j i32)
@@ -184,7 +183,7 @@
     (i32.wrap_i64)
   )
 
-  ;;@signature $print : void (i64)
+  ;;@signature $print : void (string)
   (func $print (param $str i64) 
     (local $len i32)
 
@@ -197,9 +196,6 @@
     (call $str_ptr (local.get $str))
     (local.get $len)
     (memory.copy)
-
-    ;; Write newline 
-    (i32.store8 (i32.add (local.get $len) (i32.const 8)) (i32.const 10))
 
     ;; Write iov
     (i32.store (i32.const 0) (i32.const 8))

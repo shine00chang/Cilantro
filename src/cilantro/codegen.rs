@@ -6,11 +6,22 @@ use super::*;
 #[derive(Debug, Clone)]
 pub struct Prog {
     global: Glob,
+    str_lit_ptr: usize,
     funcs: Vec<Func>,
 }
 impl Prog {
     fn add_func (&mut self, f: Func) {
         self.funcs.push(f)
+    }
+    fn push_g (&mut self, s: &str) {
+        self.global.push(s);
+    }
+    fn add_str_lit (&mut self, s: &str) -> usize {
+        let out = self.str_lit_ptr;
+        self.global.push(&format!("(data (i32.const {}) \"{s}\")", out));
+        self.str_lit_ptr += s.len();
+
+        return out;
     }
 }
 #[derive(Debug, Clone, Default)]
@@ -92,7 +103,8 @@ impl Func {
 pub fn gen (nodes: Vec<LNode>) -> String {
     let mut prog = Prog { 
         global: Glob::default(),
-        funcs: vec![]
+        funcs: vec![],
+        str_lit_ptr: super::stdlib::RESERVED_MEM,
     };
     let mut main = Func::new("func $_main".to_owned());
 

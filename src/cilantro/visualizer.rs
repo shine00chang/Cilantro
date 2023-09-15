@@ -106,11 +106,11 @@ impl TypeError {
 
             // Underline
             print!("\n    {:w$}^", "", w=self.start-a);
-            print!("{:-<w$}", "", w=5);
+            print!("{:-<w$}{}\n", "", self.msg, w=5);
 
             // Note
-            if let Some(expected) = self.expected { print!("expected type: {}\n", expected) }
-            if let Some(found)    = self.found    { print!("   found type: {}\n", found) }
+            if let Some(expected) = self.expected { print!("  expected type: {}\n", expected) }
+            if let Some(found)    = self.found    { print!("  found type: {}\n", found) }
         }
     }
 }
