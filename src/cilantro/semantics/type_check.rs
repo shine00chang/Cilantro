@@ -52,20 +52,29 @@ impl TypeTable {
 }
 
 /// Type checking for nodes
-pub fn type_check (nodes: &Vec<LNode>) -> Result<(), TypeError> { 
+pub fn type_check (nodes: Vec<LNode>) -> Result<Vec<LNode>, TypeError> { 
     let mut table = TypeTable::with_std();
 
-    for node in nodes {
-        node.type_check(&mut table).map(|_| ())?
-    }
-    Ok(())
+    nodes
+        .into_iter()
+        .map(|node| 
+            node.type_check(&mut table).map(|(a, _)| a)
+        )
+        .collect::<Result<_, _>>()
 }
 
 impl LElem {
-    fn type_check (&self, table: &mut TypeTable) -> Result<Type, TypeError> {
+    fn type_check (mut self, table: &mut TypeTable) -> Result<(LElem, Type), TypeError> {
         match self {
-            LElem::Token(t) => Ok(t.type_check(table)),
-            LElem::Node(n)  => n.type_check(table)
+            LElem::Token(tok) => {
+                let (tok, t) = tok.type_check(table);
+                Ok((LElem::Token(tok), t))
+            },
+            LElem::Node(node) => {
+                node
+                    .type_check(table)
+                    .map(|(node, t)| (LElem::Node(node), t))
+            }
         }
     }
 }
@@ -74,21 +83,33 @@ static mut CURRENT_FUNC: Option<String> = None;
 impl LNode {
     /// Uses a type table to ensure type correctness of program.
     /// Does not need to bother with scoping issues. Resolved already.
-    fn type_check (&self, table: &mut TypeTable) -> Result<Type, TypeError> {
-        match &self.data {
-            NodeData::Expr { t1, t2, op: _ } => {
-                let t1_t = self.get(t1).type_check(table)?;
-                let t2_t = self.get(t2).type_check(table)?;
+    fn type_check (self, table: &mut TypeTable) -> Result<(LNode, Type), TypeError> {
+        let (data, t) = match self.data {
+            NodeData::Expr { t1, t2, op } => {
+                let (t1, t1_t) = t1.type_check(table)?;
+                let (t2, t2_t) = t2.type_check(table)?;
+                println!("expr terms: {}, {}", t1_t, t2_t);
                 if t1_t != t2_t {
                     return Err( TypeError::new(
-                        self.get(t2).start(),
+                        t2.start(),
                         "Expression terms not of same type".to_owned(),
                         t1_t,
                         t2_t
                     ));
                 }
-                Ok(t1_t)
+                let t1 = Box::new(t1);
+                let t2 = Box::new(t2);
+
+                (
+                NodeData::Expr{
+                    t1,
+                    t2,
+                    op,
+                },
+                t1_t
+                )
             },
+            /*
             NodeData::Return { expr } => {
                 let t = self.get(expr).type_check(table)?;
 
@@ -148,13 +169,23 @@ impl LNode {
                 // TODO: Iterate through statements. Last one determines type.
                 Ok(Type::Void)
             }
+            */
             NodeData::Declaration { ident, expr } => {
                 // Set type for ident
-                let t = self.get(expr).type_check(table)?;
-                table.define_v(ident, t);
+                let (expr, expr_t) = expr.type_check(table)?;
+                println!("declaration type: {}", expr_t);
+                table.define_v(&ident, expr_t.clone());
+                let expr = Box::new(expr);
 
-                Ok(Type::Void)
+                (
+                NodeData::Declaration { 
+                    ident,
+                    expr,
+                },
+                Type::Void
+                )
             },
+            /*
             NodeData::Function { ident, params, r_type, block } => {
 
                 // TODO: parameter Typing
@@ -174,20 +205,35 @@ impl LNode {
 
                 Ok(Type::Void)
             }
+            */
             data @ _ => panic!("Typechecking unimplemented for {}", NodeT::from(data))
-        }
+        };
+        Ok((
+            LNode {
+                data,
+                t: t.clone(),
+                ..self
+            },
+            t
+        ))
+        //Err(TypeError::new(0, "".to_owned(), Type::Int, Type::Void))
     }
 }
 
-impl Token {
-    fn type_check (&self, table: &mut TypeTable) -> Type {
-        match &self.data {
-            TokenData::INT(_) => Type::Int,
-            TokenData::STR_LIT(_) => Type::String,
-            TokenData::IDENT(ident) => {
-                table.get_v(ident).clone()
-            }
+impl LToken {
+    fn type_check (self, table: &mut TypeTable) -> (LToken, Type) {
+        let t = match &self.data {
+            TokenData::INT(_)       => Type::Int,
+            TokenData::STR_LIT(_)   => Type::String,
+            TokenData::IDENT(ident) => table.get_v(ident).clone(),
             data @ _ => panic!("Typing unimplemented for token {}", TokenT::from(data))
-        }
+        };
+        (
+            LToken {
+                t: t.clone(),
+                ..self
+            },
+            t
+        )
     }
 }

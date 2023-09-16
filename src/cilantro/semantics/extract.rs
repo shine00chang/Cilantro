@@ -9,7 +9,6 @@ impl Node {
     /// Removes any extracted children. New children array should only include those refered to by
     /// a ChildRef 
     pub fn extract (mut self) -> LNode {
-        let mut children = vec![];
         let data = match self.t {
             NodeT::Declaration => {
                 // Declare local variable
@@ -24,16 +23,16 @@ impl Node {
                         assert!(n.t.is_evaluable());
                         LElem::Node(n.extract())
                     },
-                    Elem::Token(t) => LElem::Token(t)
+                    Elem::Token(t) => LElem::Token(LToken::from(t))
                 };
-                children.push(expr);
-                let expr = ChildRef::new(0);
+                let expr = Box::new(expr);
                 
                 NodeData::Declaration { 
                     ident,
-                    expr
+                    expr,
                 }
             },
+            /*
             NodeT::Return => {
                 // Get Expression
                 let expr = self.children.pop().unwrap();
@@ -89,6 +88,7 @@ impl Node {
                 }
                 NodeData::Params{ v }
             },
+            */
             NodeT::Expr => {
                 let op = if let Elem::Token(t) = &self.children[1] {
                     match &t.data {
@@ -103,19 +103,18 @@ impl Node {
                         assert!(n.t.is_evaluable());
                         LElem::Node(n.extract())
                     },
-                    Elem::Token(t) => LElem::Token(t)
+                    Elem::Token(t) => LElem::Token(LToken::from(t))
                 };
                 let t2 = match self.children[2].clone() {
                     Elem::Node(n)  => {
                         assert!(n.t.is_evaluable());
                         LElem::Node(n.extract())
                     },
-                    Elem::Token(t) => LElem::Token(t)
+                    Elem::Token(t) => LElem::Token(LToken::from(t))
                 };
-                children.push(t1);
-                children.push(t2);
-                let t1 = ChildRef::new(0);
-                let t2 = ChildRef::new(1);
+                let t1 = Box::new(t1);
+                let t2 = Box::new(t2);
+
 
                 NodeData::Expr{
                     t1,
@@ -123,6 +122,7 @@ impl Node {
                     op,
                 }
             },
+            /*
             NodeT::Function => {
                 let mut i = 0;
                 let mut ref_i = 0;
@@ -182,13 +182,14 @@ impl Node {
                     .collect();
                 NodeData::Block
             }
+            */
             _ => panic!("extract unimplemented for node {}", self.t)
         };
         LNode { 
             start: self.start,
             end: self.end,
             data,
-            children
+            t: Type::Void
         }
     }
 }

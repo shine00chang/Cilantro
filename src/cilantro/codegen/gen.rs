@@ -11,6 +11,7 @@ impl LElem {
 impl LNode {
     pub fn codegen (&self, prog: &mut Prog, func: &mut Func) {
         match &self.data {
+            /*
             NodeData::Function { ident, params, r_type, block } => {
                 // Create function
                 let mut func = Func::new(format!("func ${}", ident));
@@ -41,19 +42,22 @@ impl LNode {
                 for child in &self.children {
                     child.codegen(prog, func);
                 }
-            }
+            },
+            */
             NodeData::Declaration{ ident, expr } => {
 
-                let expr = self.get(expr);
+                let expr_t = expr.t();
 
                 // Declare local variable
-                func.prefix(format!("(local ${ident} i64)"));
+                println!("{}", expr_t);
+                func.prefix(format!("(local ${ident} {})", expr_t.gen()));
 
                 // Expand Expression
                 func.push_s(format!("(local.set ${}", ident));
                 expr.codegen(prog, func);
                 func.push(")");
             },
+            /*
             NodeData::Return{ expr } => {
                 self.get(expr).codegen(prog, func);
             },
@@ -72,25 +76,31 @@ impl LNode {
                     elem.codegen(prog, func);
                 }
             },
+            */
             NodeData::Expr{ op, t1, t2 } => {
-                let a = match &op[..] {
-                    "+" => "(i64.add",
-                    "-" => "(i64.sub",
-                    "*" => "(i64.mul",
-                    "/" => "(i64.div",
-                    _ => panic!()
-                };
-                func.push(a);
-                self.get(t1).codegen(prog, func);
-                self.get(t2).codegen(prog, func);
-                func.push(")");
+                match self.t {
+                    Type::Int => {
+                        let a = match &op[..] {
+                            "+" => "(i64.add",
+                            "-" => "(i64.sub",
+                            "*" => "(i64.mul",
+                            "/" => "(i64.div",
+                            _ => panic!()
+                        };
+                        func.push(a);
+                        t1.codegen(prog, func);
+                        t2.codegen(prog, func);
+                        func.push(")");
+                    },
+                    _ => panic!("Expressions not implemented for type {}", self.t)
+                }
             },
             _ => panic!("codegen unimplemented for {}", self.data)
         }
     }
 }
 
-impl Token {
+impl LToken {
     fn codegen (&self, prog: &mut Prog, func: &mut Func) {
         match &self.data {
             TokenData::INT(n) => {
@@ -111,6 +121,16 @@ impl Token {
                 func.push("(i64.add)");
             }
             _ => panic!("codegen unimplemented for {}", self.data)
+        }
+    }
+}
+
+impl Type {
+    fn gen (&self) -> &str {
+        match self {
+            Type::Int => "i64",
+            Type::String => "i64",
+            _ => panic!("codegen unimplemented for type {}", self)
         }
     }
 }

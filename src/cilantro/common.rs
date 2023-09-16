@@ -13,6 +13,24 @@ pub struct Token {
     pub end: usize,
     pub data: TokenData,
 }
+
+#[derive(Debug, Clone)]
+pub struct LToken {
+    pub start: usize,
+    pub end: usize,
+    pub data: TokenData,
+    pub t: Type
+}
+impl LToken {
+    pub fn from (tok: Token) -> Self {
+        Self {
+            t: Type::Void,
+            start: tok.start,
+            end: tok.end,
+            data: tok.data,
+        }
+    }
+}
 pub type Tokens = Vec<Token>;
 
 
@@ -48,12 +66,7 @@ pub struct LNode {
     pub start: usize,
     pub end: usize,
     pub data: NodeData,
-    pub children: Vec<LElem>
-}
-impl LNode {
-    pub fn get (&self, n: &ChildRef) -> &LElem {
-        &self.children[n.i]
-    }
+    pub t: Type,
 }
 
 #[derive(Debug, Clone, Hash, PartialEq, Eq, EnumIs)]
@@ -71,7 +84,7 @@ pub enum Elem {
 #[derive(Debug, Clone)]
 pub enum LElem {
     Node(LNode),
-    Token(Token),
+    Token(LToken),
 }
 impl Elem {
     pub fn t (&self) -> ElemT {
@@ -111,6 +124,12 @@ impl LElem {
             n
         } else {
             panic!("downcasting to node failed. Check callstack");
+        }
+    }
+    pub fn t (&self) -> &Type {
+        match self {
+            LElem::Node(n)  => &n.t, 
+            LElem::Token(t) => &t.t,
         }
     }
 }

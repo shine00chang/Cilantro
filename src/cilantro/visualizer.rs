@@ -54,12 +54,14 @@ impl fmt::Display for Node {
     }
 }
 
+/*
 impl fmt::Display for LNode {
     /// Prints out node tree in a vertical graph. Wraps Node::ft
     fn fmt (&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         self.ft(f, &String::from(" "))
     }
 }
+*/
 
 impl fmt::Display for ChildRef {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -73,6 +75,7 @@ impl fmt::Display for Type {
     }
 }
 
+use super::semantics::TypeError;
 impl TypeError {
     pub fn print(self, source: &String) {
         print!("=== Type Error ===\n");
@@ -156,6 +159,7 @@ impl Node {
     }
 } 
 
+/*
 impl LNode {
     /// Prints out node tree in a vertical graph
     fn ft (&self, f: &mut fmt::Formatter<'_>, prefix: &String) -> fmt::Result {
@@ -195,6 +199,7 @@ impl LNode {
         Ok(())
     }
 }
+*/
 
 
 /// Visually maps tokens to the source string.
@@ -266,7 +271,6 @@ pub fn print_tokens (toks: &Tokens, source: &String) -> Result<String, std::fmt:
 
 
 use super::parser::ParseTable;
-use super::semantics::TypeError;
 use strum::IntoEnumIterator;
 /// Prints out & formats parsing table
 pub fn print_table (table: &ParseTable) -> Result<String, std::fmt::Error> { 

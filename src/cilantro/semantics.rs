@@ -27,15 +27,18 @@ pub fn to_ast (source: &String, nodes: Vec<Node>) -> Vec<LNode> {
     nodes.iter_mut().for_each(|n| n.resolve_scope());
 
     // Extract children values & Map to Node data.
-    let mut nodes: Vec<_> = nodes.into_iter().map(|n| n.extract()).collect();
+    let nodes: Vec<_> = nodes.into_iter().map(|n| n.extract()).collect();
 
     // Type checking
-    if let Err(err) = type_check::type_check(&mut nodes) {
-        let out = String::new();
-        err.print(source);
-        println!("{out}");
-        panic!();
-    }
+    let nodes = match type_check::type_check(nodes) {
+        Err(err) => {
+            let out = String::new();
+            err.print(source);
+            println!("{out}");
+            panic!();
+        }, 
+        Ok(v) => v
+    };
 
     nodes
 }

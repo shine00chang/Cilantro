@@ -11,6 +11,7 @@ impl Node {
                     .recurse()
                     .cast()
             },
+            /*
             NodeT::Return => {
                 self.filter_tok(vec![TokenT::K_RETURN])
                     .recurse()
@@ -27,6 +28,7 @@ impl Node {
                     .into_list()
                     .cast()
             },
+            */
             NodeT::Expr => {
                 self.recurse()
                     .collapse_if_1()
@@ -46,6 +48,7 @@ impl Node {
                 self.recurse()
                     .collapse_if_1()
             },
+            /*
             NodeT::Function => {
                 self.filter_tok(vec![TokenT::K_FUNC, TokenT::PAREN_L, TokenT::PAREN_R, TokenT::ARROW])
                     .recurse()
@@ -73,6 +76,7 @@ impl Node {
                     .into_list()
                     .cast() 
             }
+            */
             _ => panic!("no trimmer implemented for {}", self.t) 
         }
     }

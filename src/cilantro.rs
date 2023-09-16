@@ -28,8 +28,10 @@ pub fn from_source (source: String) -> std::io::Result<()> {
 
     let nodes = semantics::to_ast(&source, nodes);
 
+    /*
     println!("Abstract Syntax Tree:");
     nodes.iter().for_each(|n| print!("{n}"));
+    */
 
     let code = codegen::gen(nodes);
     println!("Generated code:");
@@ -40,5 +42,6 @@ pub fn from_source (source: String) -> std::io::Result<()> {
     let path = "out/prog.wat";
     let mut file = File::create(path).expect(format!("Could not create file '{}'", path).as_str());
     file.write_all(code.as_bytes()).expect(format!("Could not write to file '{}'", path).as_str());
+
     Ok(())
 }

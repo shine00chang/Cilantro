@@ -23,10 +23,6 @@ impl Default for Type {
 pub enum TokenData {
     EOF,
 
-    a(char),
-    b(char),
-    x,
-
     K_LET,
     K_FUNC,
     K_RETURN,
@@ -57,11 +53,8 @@ pub enum TokenData {
 pub enum NodeData {
     // FIXED
     ROOT,
-
-    A { c: char },
-    S { x: usize },
-
     Statement,
+/*
     Function {
         ident: String,
         params: Option<ChildRef>,
@@ -70,30 +63,33 @@ pub enum NodeData {
     },
     Block,
     List,
+*/
     Declaration { 
         ident: String,
-        expr: ChildRef,
+        expr: Box<LElem>,
     },
-    Return { expr: ChildRef },
     Expr {
-        t1: ChildRef,
-        t2: ChildRef,
+        t1: Box<LElem>,
+        t2: Box<LElem>,
         op: String, 
     },
     T1, 
     T2, 
+/*
+    Return { expr: ChildRef },
     Invoke {
         ident: String,
         args: Option<ChildRef>,
     },
     Args,
     Params { v: Vec<String> },
+*/
 }
 
 impl NodeT {
     pub fn is_evaluable (&self) -> bool {
         match self {
-            NodeT::Expr | NodeT::Invoke => true,
+            NodeT::Expr /* | NodeT::Invoke */ => true,
             _ => false,
         }
     }
@@ -119,10 +115,13 @@ impl Productions {
     pub fn make () -> Self {
         let apices = vec![
             NodeT::Statement,
+        /*
             NodeT::Function,
             NodeT::Block
+        */
         ];
         let v = vec![
+            /*
             (
                 NodeT::Block,
                 vec![ vec![
@@ -172,27 +171,32 @@ impl Productions {
                     ],
                 ]
             ),
+            */
             (
                 NodeT::Statement,
                 vec![
                     vec![ElemT::Node(NodeT::Declaration)],
+                    /*
                     vec![ElemT::Node(NodeT::Block)],
                     vec![ElemT::Node(NodeT::Invoke)],
                     vec![ElemT::Node(NodeT::Return)]
+                    */
                 ]
             ),
             ( 
-                NodeT::Return,
-                vec![ vec![ 
-                    ElemT::Token(TokenT::K_RETURN),
-                    ElemT::Node(NodeT::Expr)
-                ] ]
-            ),           ( 
                 NodeT::Declaration,
                 vec![ vec![ 
                     ElemT::Token(TokenT::K_LET),
                     ElemT::Token(TokenT::IDENT),
                     ElemT::Token(TokenT::EQ_1),
+                    ElemT::Node(NodeT::Expr)
+                ] ]
+            ),
+            /*
+            ( 
+                NodeT::Return,
+                vec![ vec![ 
+                    ElemT::Token(TokenT::K_RETURN),
                     ElemT::Node(NodeT::Expr)
                 ] ]
             ),
@@ -219,6 +223,7 @@ impl Productions {
                     vec![ElemT::Node(NodeT::Args), ElemT::Token(TokenT::COMMA), ElemT::Node(NodeT::Expr)]
                 ]
             ),
+            */
             // Expressions
             ( 
                 NodeT::Expr,
@@ -237,7 +242,7 @@ impl Productions {
             ( 
                 NodeT::T2,
                 vec![
-                    vec![ ElemT::Node(NodeT::Invoke) ],
+                    //vec![ ElemT::Node(NodeT::Invoke) ],
                     vec![ ElemT::Token(TokenT::INT) ],
                     vec![ ElemT::Token(TokenT::IDENT) ],
                     vec![ ElemT::Token(TokenT::STR_LIT) ],
@@ -248,6 +253,7 @@ impl Productions {
         Self::new(apices, v)
     }
     
+    /*
     #[cfg(test)]
     pub fn make_test () -> Self {
         let apices = vec![
@@ -268,4 +274,5 @@ impl Productions {
         ];
         Self::new(apices, v)
     }
+    */
 }
