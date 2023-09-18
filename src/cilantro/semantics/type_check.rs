@@ -97,21 +97,18 @@ impl LNode {
                         t2_t
                     ));
                 }
-                let t1 = Box::new(t1);
-                let t2 = Box::new(t2);
 
                 (
                 NodeData::Expr{
-                    t1,
-                    t2,
+                    t1: Box::new(t1),
+                    t2: Box::new(t2),
                     op,
                 },
                 t1_t
                 )
             },
-            /*
             NodeData::Return { expr } => {
-                let t = self.get(expr).type_check(table)?;
+                let (expr, t) = expr.type_check(table)?;
 
                 // Check type with function signature
                 unsafe { 
@@ -121,55 +118,63 @@ impl LNode {
                     let out_t = &table.get_f(&ident).1;
                     if *out_t != t {
                         return Err( TypeError::new(
-                            self.get(expr).start(),
+                            expr.start(),
                             "Return expression does not match function signature".to_owned(),
                             out_t.clone(),
                             t 
                         ));
                     }
                 }
-                Ok(t)
+                (
+                NodeData::Return { 
+                    expr: Box::new(expr)
+                },
+                t
+                )
             }
             NodeData::Invoke { ident, args } => {
 
                 // Check Args
-                if let Some(args) = args {
+                if let Some(ref args) = args {
+
+                    let sig = table.get_f(&ident);
+
+                    // Extract Args
+                    let args = args.downcast_node();
+                    let args = if let NodeData::Args{ v } = &args.data { v } else { panic!() };
 
                     // Check arg length
-                    let args = self.get(args).downcast_node();
-                    let sig = table.get_f(ident);
-                    if args.children.len() != sig.0.len() {
+                    if args.len() != sig.0.len() {
                         return Err( TypeError::msg(
                             self.start,
-                            format!("Argument lengths mismatched. expected {}, found {}", sig.0.len(), args.children.len())
+                            format!("Argument lengths mismatched. expected {}, found {}", sig.0.len(), args.len())
                         ))
                     }
 
                     // TODO: Parameter/Argument Typing
-                    for (i, arg) in args.children.iter().enumerate() {
-                        let arg_t = arg.type_check(table)?;
-                        let sig = table.get_f(ident);
-                        /*
-                        if arg_t != sig.0[i] {
-                            return Err( TypeError::new(
-                                arg.start(),
-                                "Argument type unexpected".to_owned(),
-                                sig.0[i].clone(),
-                                arg_t
-                            ));
-                        }
-                        */
-                    }
                 }
+
                 // Return function signature
-                let sig = table.get_f(ident);
-                Ok(sig.1.clone())
+                let sig = table.get_f(&ident);
+                println!("{:?}", sig);
+                (
+                NodeData::Invoke { ident, args },
+                sig.1.clone()
+                )
             }
-            NodeData::Block => {
+            NodeData::Block { v } => {
                 // TODO: Iterate through statements. Last one determines type.
-                Ok(Type::Void)
+                let mut nv = Vec::new();
+                nv.reserve(v.len());
+                for stmt in v {
+                    let (stmt, _) = stmt.type_check(table)?;
+                    nv.push(Box::new(stmt));
+                }
+                (
+                NodeData::Block{ v: nv },
+                Type::Void
+                )
             }
-            */
             NodeData::Declaration { ident, expr } => {
                 // Set type for ident
                 let (expr, expr_t) = expr.type_check(table)?;
@@ -185,12 +190,15 @@ impl LNode {
                 Type::Void
                 )
             },
-            /*
             NodeData::Function { ident, params, r_type, block } => {
+                
+                unsafe {
+                    CURRENT_FUNC = Some(ident.clone());
+                }
 
                 // TODO: parameter Typing
-                let param_t = if let Some(params) = params {
-                    let params = self.get(params).downcast_node();
+                let param_t = if let Some(ref params) = params {
+                    let params = params.downcast_node();
                     if let NodeData::Params { v } = &params.data {
                         vec![Type::Void; v.len()]
                     } else { panic!() }
@@ -198,14 +206,22 @@ impl LNode {
 
                 // Set signature
                 let sig = (param_t, r_type.clone());
-                table.define_f(ident, sig);
+                table.define_f(&ident, sig);
 
                 // Recurse into block
-                self.get(block).type_check(table)?;
+                let (block, _) = block.type_check(table)?;
+                let block = Box::new(block);
 
-                Ok(Type::Void)
+                (
+                NodeData::Function { 
+                    ident,
+                    params,
+                    r_type,
+                    block
+                },
+                Type::Void
+                )
             }
-            */
             data @ _ => panic!("Typechecking unimplemented for {}", NodeT::from(data))
         };
         Ok((

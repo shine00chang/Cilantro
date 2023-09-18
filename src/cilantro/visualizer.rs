@@ -2,14 +2,7 @@ use std::fmt::Write;
 use core::fmt;
 use super::*;
 
-impl LNode {
-    fn get_children (&self) -> Vec<&Box<LElem>> {
-        match &self.data {
-            NodeData::Declaration { ident:_, expr } => vec![expr],
-            _ => vec![],
-        }
-    }
-}
+
 
 impl fmt::Display for ElemT {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -66,12 +59,6 @@ impl fmt::Display for LNode {
     /// Prints out node tree in a vertical graph. Wraps Node::ft
     fn fmt (&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         self.ft(f, &String::from(" "))
-    }
-}
-
-impl fmt::Display for ChildRef {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.i)
     }
 }
 
@@ -177,6 +164,7 @@ impl LNode {
             let c = if p.pop() == Some('│') { "├" } else { "└" };
             write!(f, "{p}{c}── ")?;
             self.fmt_fields_only(f)?;
+            write!(f, " => {}", self.t)?;
             write!(f, "\n")?;
         }
         
@@ -208,18 +196,42 @@ impl LNode {
         Ok(())
     }
 
-    fn fmt_fields_only (&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn get_children (&self) -> Vec<&Box<LElem>> {
         match &self.data {
-            NodeData::Declaration { ident, expr:_ } => {
-                write!(f, "Declaration: {{ ")?;
-                write!(f, "ident: {:?}, ", ident)?;
-            },
-            NodeData::Expr { t1:_, t2:_, op } => {
-                write!(f, "Expr: {{ ")?;
-                write!(f, "op: {:?}, ", op)?;
-            },
-            _ => write!(f, "Unimplemented")?
+            NodeData::Declaration { ident:_, expr } => vec![expr],
+            NodeData::Function { ident:_, params, r_type:_, block } => 
+                if let Some(params) = params {
+                    vec![params, block]
+                } else { 
+                    vec![block]
+                },
+            NodeData::Block { v } => v.iter().map(|x| x).collect(),
+            NodeData::Invoke { ident:_, args } => if let Some(args) = args { vec![args] } else { vec![] }, 
+            NodeData::Expr { t1, t2, op:_ } => vec![t1, t2],
+            NodeData::Return { expr } => vec![expr],
+            _ => vec![],
         }
+    }
+
+    fn fmt_fields_only (&self, f: &mut fmt::Formatter) -> fmt::Result {
+
+        write!(f, "{} ", NodeT::from(self.data.clone()))?;
+        write!(f, "{{ ")?;
+
+        match &self.data {
+            NodeData::Function { ident, params:_, r_type, block:_ } => {
+                write!(f, "ident: {:?}, ", ident)?;
+                write!(f, "r_type: {}, ", r_type)?;
+            },
+            NodeData::Declaration { ident, expr:_ } => 
+                write!(f, "ident: {:?}, ", ident)?,
+               
+            NodeData::Expr { t1:_, t2:_, op } => 
+                write!(f, "op: {:?}, ", op)?,
+            NodeData::Invoke { ident, args:_ } => 
+                write!(f, "ident: {:?}, ", ident)?,
+            _ => () 
+        };
         write!(f, " }}")?;
         Ok(())
     }

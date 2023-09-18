@@ -1,9 +1,9 @@
-func f1 (i) -> i64 {
-  return f2() + i
-}
-
-func f2 () -> i64 {
+func f1 () -> i64 {
   return 1
 }
 
-print64(f1(4))
+func f2 (i: i64) -> i64 {
+  return f1() + i
+}
+
+print64(f2(4))

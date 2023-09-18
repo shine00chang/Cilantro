@@ -32,17 +32,15 @@ impl Node {
                     expr,
                 }
             },
-            /*
             NodeT::Return => {
                 // Get Expression
                 let expr = self.children.pop().unwrap();
                 assert!(expr.t().is_evaluable());
-                match expr { 
-                    Elem::Node(n)  => children.push(LElem::Node(n.extract())),
-                    Elem::Token(t) => children.push(LElem::Token(t))
-                }
-
-                let expr = ChildRef::new(0);
+                let expr = match expr { 
+                    Elem::Node(n)  => LElem::Node(n.extract()),
+                    Elem::Token(t) => LElem::Token(LToken::from(t))
+                };
+                let expr = Box::new(expr);
 
                 NodeData::Return { expr }
             }
@@ -58,24 +56,29 @@ impl Node {
                 let args = if self.children.len() > 1 {
                     if let Elem::Node(n) = self.children[1].clone() {
                         assert!(n.t.is_args());
-                        children.push(LElem::Node(n.extract()));
-                        Some(ChildRef::new(0))
+                        let elem = LElem::Node(n.extract());
+                        Some(Box::new(elem))
                     } else { panic!() }
                 } else { None };
+            
                 NodeData::Invoke { ident, args }
             },
             NodeT::Args => {
-                for child in self.children.into_iter() {
-                    let n = match child {
-                        Elem::Node(n)  => {
-                            n.t.is_evaluable();
-                            LElem::Node(n.extract())
-                        },
-                        Elem::Token(t) => LElem::Token(t)
-                    };
-                    children.push(n);
-                }
-                NodeData::Args
+                let v = self.children
+                    .into_iter()
+                    .map(|child| {
+                        let n = match child {
+                            Elem::Node(n)  => {
+                                n.t.is_evaluable();
+                                LElem::Node(n.extract())
+                            },
+                            Elem::Token(t) => LElem::Token(LToken::from(t))
+                        };
+                        Box::new(n)
+                    })
+                    .collect::<Vec<_>>();
+
+                NodeData::Args{ v }
             },
             NodeT::Params => {
                 let mut v = vec![];
@@ -88,7 +91,6 @@ impl Node {
                 }
                 NodeData::Params{ v }
             },
-            */
             NodeT::Expr => {
                 let op = if let Elem::Token(t) = &self.children[1] {
                     match &t.data {
@@ -122,7 +124,6 @@ impl Node {
                     op,
                 }
             },
-            /*
             NodeT::Function => {
                 let mut i = 0;
                 let mut ref_i = 0;
@@ -138,11 +139,9 @@ impl Node {
                 // Get Params 
                 let params = if let Elem::Node(n) = self.children[i].clone() {
                     if n.t.is_params() {
-                        children.push(LElem::Node(n.extract()));
-                        let out = Some(ChildRef::new(ref_i));
-                        ref_i += 1;
                         i += 1;
-                        out
+                        let elem = LElem::Node(n.extract());
+                        Some( Box::new( elem ) )
                     } else { None }
                 } else { None };
 
@@ -157,11 +156,9 @@ impl Node {
                 // Get Block
                 let block = if let Elem::Node(n) = self.children[i].clone() {
                     assert!(n.t.is_block());
-                    children.push(LElem::Node(n.extract()));
-                    let out =ChildRef::new(ref_i);
-                    ref_i += 1;
                     i += 1;
-                    out
+                    let elem = LElem::Node(n.extract());
+                    Box::new( elem )
                 } else { panic!() };
 
                 NodeData::Function {
@@ -172,17 +169,17 @@ impl Node {
                 }
             },
             NodeT::Block => {
-                children = self.children
+                let v = self.children
                     .into_iter()
                     .map(|elem| {
                         if let Elem::Node(stmt) = elem {
-                            LElem::Node(stmt.extract())
+                            let elem = LElem::Node(stmt.extract());
+                            Box::new(elem)
                         } else { panic!() }
                     })
                     .collect();
-                NodeData::Block
+                NodeData::Block{ v }
             }
-            */
             _ => panic!("extract unimplemented for node {}", self.t)
         };
         LNode { 

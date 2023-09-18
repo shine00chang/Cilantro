@@ -11,14 +11,13 @@ impl LElem {
 impl LNode {
     pub fn codegen (&self, prog: &mut Prog, func: &mut Func) {
         match &self.data {
-            /*
             NodeData::Function { ident, params, r_type, block } => {
                 // Create function
                 let mut func = Func::new(format!("func ${}", ident));
                 
                 // Params
                 if let Some(params) = params { 
-                    self.get(params).codegen(prog, &mut func);
+                    params.codegen(prog, &mut func);
                 }
 
                 // Write return type
@@ -29,7 +28,7 @@ impl LNode {
                 }               
 
                 // Block
-                self.get(block).codegen(prog, &mut func);
+                block.codegen(prog, &mut func);
 
                 prog.add_func(func);
             },
@@ -38,12 +37,11 @@ impl LNode {
                     func.prefix(format!("(param ${param} i64)"))
                 }
             },
-            NodeData::Block => {
-                for child in &self.children {
+            NodeData::Block { v }=> {
+                for child in v {
                     child.codegen(prog, func);
                 }
             },
-            */
             NodeData::Declaration{ ident, expr } => {
 
                 let expr_t = expr.t();
@@ -57,26 +55,24 @@ impl LNode {
                 expr.codegen(prog, func);
                 func.push(")");
             },
-            /*
-            NodeData::Return{ expr } => {
-                self.get(expr).codegen(prog, func);
+            NodeData::Return { expr } => {
+                expr.codegen(prog, func);
             },
-            NodeData::Invoke{ ident, args } => {
+            NodeData::Invoke { ident, args } => {
                 func.push_s(format!("(call ${}", ident));
 
                 if let Some(args) = args {
-                    self.get(args).codegen(prog, func);
+                    args.codegen(prog, func);
                 }
 
                 func.push(")");
             },
-            NodeData::Args => {
+            NodeData::Args { v } => {
                 // Expand each children 
-                for elem in &self.children {
+                for elem in v {
                     elem.codegen(prog, func);
                 }
             },
-            */
             NodeData::Expr{ op, t1, t2 } => {
                 match self.t {
                     Type::Int => {

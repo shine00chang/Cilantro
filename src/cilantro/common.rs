@@ -52,15 +52,8 @@ impl Node {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct ChildRef {
-    pub i: usize
-}
-impl ChildRef {
-    pub fn new (i: usize) -> Self {
-        Self { i } 
-    }
-}
+pub type ChildRef = Box<LElem>;
+
 #[derive(Debug, Clone)]
 pub struct LNode {
     pub start: usize,
