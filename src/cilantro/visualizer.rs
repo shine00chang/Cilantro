@@ -2,6 +2,14 @@ use std::fmt::Write;
 use core::fmt;
 use super::*;
 
+impl LNode {
+    fn get_children (&self) -> Vec<&Box<LElem>> {
+        match &self.data {
+            NodeData::Declaration { ident:_, expr } => vec![expr],
+            _ => vec![],
+        }
+    }
+}
 
 impl fmt::Display for ElemT {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -54,14 +62,12 @@ impl fmt::Display for Node {
     }
 }
 
-/*
 impl fmt::Display for LNode {
     /// Prints out node tree in a vertical graph. Wraps Node::ft
     fn fmt (&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         self.ft(f, &String::from(" "))
     }
 }
-*/
 
 impl fmt::Display for ChildRef {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -159,7 +165,6 @@ impl Node {
     }
 } 
 
-/*
 impl LNode {
     /// Prints out node tree in a vertical graph
     fn ft (&self, f: &mut fmt::Formatter<'_>, prefix: &String) -> fmt::Result {
@@ -170,7 +175,9 @@ impl LNode {
             
             let mut p = prefix.clone();
             let c = if p.pop() == Some('│') { "├" } else { "└" };
-            write!(f, "{p}{c}── {:?}\n", self.data)?;
+            write!(f, "{p}{c}── ")?;
+            self.fmt_fields_only(f)?;
+            write!(f, "\n")?;
         }
         
         // Update prefix
@@ -178,16 +185,18 @@ impl LNode {
         np.push_str("   │");
 
         // For each children
-        for i in 0..self.children.len() 
+        let children = self.get_children();
+        let len = children.len();
+        for (i, child) in children.into_iter().enumerate()
         {
             // If is last children, no need to inlcude line for next child in prefix
-            if i == self.children.len()-1 {
+            if i == len-1 {
                 np = prefix.clone();
                 np.push_str("    ");
             }
 
             // If child is node, recurse. Else, print.
-            match &self.children[i] {
+            match &**child {
                 LElem::Node(n)  => n.ft(f, &np)?, 
                 LElem::Token(t) => {
                     let mut p = np.clone();
@@ -198,8 +207,23 @@ impl LNode {
         }
         Ok(())
     }
+
+    fn fmt_fields_only (&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match &self.data {
+            NodeData::Declaration { ident, expr:_ } => {
+                write!(f, "Declaration: {{ ")?;
+                write!(f, "ident: {:?}, ", ident)?;
+            },
+            NodeData::Expr { t1:_, t2:_, op } => {
+                write!(f, "Expr: {{ ")?;
+                write!(f, "op: {:?}, ", op)?;
+            },
+            _ => write!(f, "Unimplemented")?
+        }
+        write!(f, " }}")?;
+        Ok(())
+    }
 }
-*/
 
 
 /// Visually maps tokens to the source string.
@@ -324,69 +348,6 @@ pub fn print_table (table: &ParseTable) -> Result<String, std::fmt::Error> {
 #[cfg(test)]
 mod test {
     use super::*;
-
-    #[allow(non_snake_case)]
-    #[test]
-    fn node () {
-        let n = {
-            let a = Token {
-                start: 0,
-                end: 0,
-                data: TokenData::a('a')
-            };
-            let b1 = Token {
-                start: 0,
-                end: 0,
-                data: TokenData::b('b')
-            };
-            let b2 = Token {
-                start: 0,
-                end: 0,
-                data: TokenData::b('b')
-            };
-            let A1 = Node {
-                start: 0,
-                end: 0,
-                t: NodeT::A,
-                children: vec![Elem::Token(b2)]
-            };
-            let A2 = Node {
-                start: 0,
-                end: 0,
-                t: NodeT::A,
-                children: vec![Elem::Token(a), Elem::Node(A1)]
-            };
-            let A3 = Node {
-                start: 0,
-                end: 0,
-                t: NodeT::A,
-                children: vec![Elem::Token(b1)]
-            };
-            Node {
-                start: 0,
-                end: 0,
-                t: NodeT::S,
-                children: vec![Elem::Node(A2), Elem::Node(A3)]
-            }
-        };
-
-        let s = concat!(
-                "└── S\n",
-                "    ├── A\n",
-                "    │   ├── a('a')\n",
-                "    │   └── A\n",
-                "    │       └── b('b')\n",
-                "    └── A\n",
-                "        └── b('b')\n",
-            );
-
-        let o = format!("{n}");
-        print!("{n}");
-
-        assert_eq!(o, s);
-    }
-
-
     use crate::cilantro::tokenize;
     #[test]
     fn tokens () {
