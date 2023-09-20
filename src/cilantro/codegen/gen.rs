@@ -34,7 +34,7 @@ impl LNode {
             },
             NodeData::Params{ v }=> {
                 for (ident, t) in v {
-                    func.prefix(format!("(param ${ident} {t})"))
+                    func.prefix(format!("(param ${ident} {})", t.gen()));
                 }
             },
             NodeData::Block { v }=> {
@@ -61,17 +61,11 @@ impl LNode {
             NodeData::Invoke { ident, args } => {
                 func.push_s(format!("(call ${}", ident));
 
-                if let Some(args) = args {
-                    args.codegen(prog, func);
+                for arg in args {
+                    arg.codegen(prog, func);
                 }
 
                 func.push(")");
-            },
-            NodeData::Args { v } => {
-                // Expand each children 
-                for elem in v {
-                    elem.codegen(prog, func);
-                }
             },
             NodeData::Expr{ op, t1, t2 } => {
                 match self.t {

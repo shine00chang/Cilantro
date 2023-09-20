@@ -17,9 +17,18 @@ impl Node {
                     .cast()
             },
             NodeT::Invoke => {
-                self.filter_tok(vec![TokenT::PAREN_L, TokenT::PAREN_R])
-                    .recurse()
-                    .cast()
+                self = self
+                    .filter_tok(vec![TokenT::PAREN_L, TokenT::PAREN_R])
+                    .recurse();
+
+                if self.children.len() > 1 {
+                    if let Elem::Node(args) = self.children.pop().unwrap() {
+                        assert!(args.t.is_args());
+                        self.children.extend(args.children);
+                    }
+                }
+
+                self.cast()
             },
             NodeT::Args => {
                 self.filter_tok(vec![TokenT::COMMA])
@@ -52,11 +61,13 @@ impl Node {
                     .cast()
             },
             NodeT::Block => {
-                self = self.filter_tok(vec![TokenT::CURLY_L, TokenT::CURLY_R])
+                self = self
+                    .filter_tok(vec![TokenT::CURLY_L, TokenT::CURLY_R])
                     .recurse();
 
                 // Consume child "List", set its children as own.
                 if let Elem::Node(list) = self.children.pop().unwrap() {
+                    assert!(list.t.is_list());
                     self.children = list.children;
                 }
 
@@ -104,17 +115,51 @@ impl Node {
         self
     }
     
-    /// Collapse the recursive list assuming the structure: X -> Xx | x
+    /// Collapse the recursive list assuming the structure: X -> XA | A
     fn into_list (mut self) -> Self {
-        let last = self.children.pop().unwrap();
-        if let Some(elem) = self.children.pop() {
+
+        // See if first node is same as self.
+        // If so, return the length of children. Used to reserve new children size.
+        let clen = if let Some(elem) = self.children.first() {
             if let Elem::Node(node) = elem {
-                if node.t == self.t {
-                    self.children.extend(node.children);
-                }
+                if node.t != self.t {
+                    return self
+                } 
+                node.children.len()
+            } else { return self }
+        } else { return self };
+        
+        // Fold into new children vector
+        let len = self.children.len() + clen;
+        self.children = self.children.into_iter().fold(vec![], |mut v, elem| {
+            if v.is_empty() {
+                v.reserve(len);
+                if let Elem::Node(node) = elem {
+                    v.extend(node.children)
+                } else { panic!() };
+            } else {
+                v.push(elem);
+            }
+            v
+        });
+
+        /*
+        // Pop second, then extend first's children onto self.
+        if let Elem::Node(node) = &mut self.children[0] {
+            node.children.extend(self.children.);
+        }
+        println!("compacting: {:?}", self.children);
+        let last = self.children.pop().unwrap();
+        let elem = self.children
+            .pop()
+            .expect("Did not find 2 children. This should mean that the grammar of this node does not follow the list pattern.");
+        if let Elem::Node(node) = elem {
+            if node.t != self.t {
+                self.children.extend(node.children);
             }
         }
         self.children.push(last);
+        */
         self
     }
 

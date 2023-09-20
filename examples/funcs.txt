@@ -6,4 +6,10 @@ func f2 (i: i64) -> i64 {
   return f1() + i
 }
 
+func lots_of_terms (a: i64, b: i64, c: i64, d: i64) -> i64 {
+  let f = c + d - a
+  return f * d
+}
+
 print64(f2(4))
+print64(lots_of_terms(f2(3), f1(), f1() + f2(f1()), f2(1)))

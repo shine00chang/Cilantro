@@ -88,9 +88,9 @@ pub enum NodeData {
     Return { expr: ChildRef },
     Invoke {
         ident: String,
-        args: Option<ChildRef>,
+        args: Vec<ChildRef>,
     },
-    Args { v: Vec<ChildRef> },
+    Args ,
     Params { v: Vec<(String, Type)> },
 }
 

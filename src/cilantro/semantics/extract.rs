@@ -59,33 +59,25 @@ impl Node {
                     } else { panic!() }
                 } else { panic!() };
 
-                // Gen Args 
-                let args = if self.children.len() > 1 {
-                    if let Elem::Node(n) = self.children[1].clone() {
-                        assert!(n.t.is_args());
-                        let elem = LElem::Node(n.extract());
-                        Some(Box::new(elem))
-                    } else { panic!() }
-                } else { None };
-            
-                NodeData::Invoke { ident, args }
-            },
-            NodeT::Args => {
-                let v = self.children
+                // Extract Arguments
+                let args = self.children
                     .into_iter()
-                    .map(|child| {
-                        let n = match child {
+                    .enumerate()
+                    .filter_map(|(i, child)| {
+                        if i < 1 { return None }
+                        let elem = match child {
                             Elem::Node(n)  => {
-                                n.t.is_evaluable();
-                                LElem::Node(n.extract())
+                                assert!(n.t.is_evaluable());
+                                let x = n.clone().extract();
+                                LElem::Node(x)
                             },
-                            Elem::Token(t) => LElem::Token(LToken::from(t))
+                            Elem::Token(t) => LElem::Token(LToken::from(t.clone()))
                         };
-                        Box::new(n)
+                        Some(Box::new(elem))
                     })
                     .collect::<Vec<_>>();
-
-                NodeData::Args{ v }
+                            
+                NodeData::Invoke { ident, args }
             },
             NodeT::Params => {
                 let mut v = vec![];

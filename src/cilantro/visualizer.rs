@@ -206,7 +206,7 @@ impl LNode {
                     vec![block]
                 },
             NodeData::Block { v } => v.iter().map(|x| x).collect(),
-            NodeData::Invoke { ident:_, args } => if let Some(args) = args { vec![args] } else { vec![] }, 
+            NodeData::Invoke { ident:_, args } => args.iter().map(|x| x).collect(), 
             NodeData::Expr { t1, t2, op:_ } => vec![t1, t2],
             NodeData::Return { expr } => vec![expr],
             _ => vec![],
@@ -230,7 +230,9 @@ impl LNode {
                 write!(f, "op: {:?}, ", op)?,
             NodeData::Invoke { ident, args:_ } => 
                 write!(f, "ident: {:?}, ", ident)?,
-            _ => () 
+            NodeData::Params { v } => 
+                write!(f, "{:?}, ", v)?,
+            _ => write!(f, "no impl")? 
         };
         write!(f, " }}")?;
         Ok(())

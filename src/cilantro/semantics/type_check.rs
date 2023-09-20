@@ -146,39 +146,34 @@ impl LNode {
             NodeData::Invoke { ident, args } => {
 
                 // Check Args
-                if let Some(args) = args.clone() {
+                let sig = table.get_f(&ident);
 
+                // Check arg length
+                if args.len() != sig.0.len() {
+                    return Err( TypeError::msg(
+                        self.start,
+                        format!("Argument lengths mismatched. expected {}, found {}", sig.0.len(), args.len())
+                    ))
+                }
+
+                let args = args.into_iter().enumerate().map(|(i, arg)| {
+                    let (arg, t) = arg.type_check(table)?; 
                     let sig = table.get_f(&ident);
-
-                    // Extract Args
-                    let args = args.node_data();
-                    let args = if let NodeData::Args{ v } = &args { v } else { panic!() };
-
-                    // Check arg length
-                    if args.len() != sig.0.len() {
-                        return Err( TypeError::msg(
+                    if t != sig.0[i] {
+                        return Err( TypeError::new(
                             self.start,
-                            format!("Argument lengths mismatched. expected {}, found {}", sig.0.len(), args.len())
+                            format!("Argument no.{i} has mismatched type."),
+                            sig.0[i].clone(),
+                            t
                         ))
                     }
-
-                    /*
-                    // TODO: Parameter/Argument Typing
-                    for (i, arg) in args.iter_mut().enumerate() {
-                        let (arg, t) = arg.type_check(table)?; 
-                        if t != sig.0[i] {
-                            return Err( TypeError::msg(
-                                self.start,
-                                format!("Argument lengths mismatched. expected {}, found {}", sig.0.len(), args.len())
-                            ))
-                        }
-                    }
-                    */
-                }
+                    Ok(Box::new(arg))
+                }).collect::<Result<_, _>>()?;
 
                 // Return function signature
                 let sig = table.get_f(&ident);
                 println!("{:?}", sig);
+
                 (
                 NodeData::Invoke { ident, args },
                 sig.1.clone()
@@ -218,13 +213,14 @@ impl LNode {
                     CURRENT_FUNC = Some(ident.clone());
                 }
 
-                // TODO: parameter Typing
+                // Extract Parameter Types, Add to signature and type table.
                 let param_t = 
                     if let Some(ref params) = params {
-                        let params = params.node_data();
-                        if let NodeData::Params { v } = &params {
-                            v.iter().map(|(_, t)| t.clone()).collect()
-                            //vec![Type::Void; v.len()]
+                        if let NodeData::Params { v } = &params.node_data() {
+                            v.iter().map(|(ident, t)| {
+                                table.define_v(ident, t.clone());
+                                t.clone()
+                            }).collect()
                         } else { panic!() }
                     } else { vec![] };
 
