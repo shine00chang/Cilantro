@@ -33,8 +33,8 @@ impl LNode {
                 prog.add_func(func);
             },
             NodeData::Params{ v }=> {
-                for param in v {
-                    func.prefix(format!("(param ${param} i64)"))
+                for (ident, t) in v {
+                    func.prefix(format!("(param ${ident} {t})"))
                 }
             },
             NodeData::Block { v }=> {

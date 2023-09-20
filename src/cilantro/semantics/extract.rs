@@ -1,5 +1,12 @@
 use super::*;
 
+impl Elem {
+    fn tok_data (&self) -> &TokenData {
+        if let Elem::Token(t) = self {
+            &t.data
+        } else { panic!() }
+    }
+}
 
 impl Node {
     /// Extracts values from children, labeling and storing them into the NodeData enumeration
@@ -82,6 +89,16 @@ impl Node {
             },
             NodeT::Params => {
                 let mut v = vec![];
+                for i in 0..self.children.len()/2 {
+                    let ident = 
+                        if let TokenData::IDENT(s) = self.children[2*i].tok_data() { s }
+                        else { panic!() };
+                    let t = 
+                        if let TokenData::TYPE(t) = self.children[2*i+1].tok_data() { t }
+                        else { panic!() };
+                    v.push((ident.clone(), t.clone()));
+                }
+                /*
                 for child in self.children.into_iter() {
                     if let Elem::Token(t) = child {
                         if let TokenData::IDENT(s) = t.data {
@@ -89,6 +106,7 @@ impl Node {
                         } else { panic!() }
                     } else { panic!() }
                 }
+                */
                 NodeData::Params{ v }
             },
             NodeT::Expr => {
@@ -126,7 +144,6 @@ impl Node {
             },
             NodeT::Function => {
                 let mut i = 0;
-                let mut ref_i = 0;
 
                 // Get symbol
                 let ident = if let Elem::Token(t) = &self.children[i] {

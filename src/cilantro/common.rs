@@ -112,13 +112,6 @@ impl LElem {
             LElem::Token(t) => t.end
         }
     }
-    pub fn downcast_node (&self) -> &LNode {
-        if let Self::Node(n) = self {
-            n
-        } else {
-            panic!("downcasting to node failed. Check callstack");
-        }
-    }
     pub fn t (&self) -> &Type {
         match self {
             LElem::Node(n)  => &n.t, 

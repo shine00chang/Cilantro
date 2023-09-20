@@ -125,7 +125,7 @@ fn symbols (input: Span) -> IResult<Span, Token> {
 
 fn characters (input: Span) -> IResult<Span, Token> {
     ws(map_res(
-        recognize(one_of("(){},")),
+        recognize(one_of("(){},:")),
         |s: Span| -> Result<Token, nom::error::Error<Span>> {
             let data = match s.fragment() {
                 &"(" => TokenData::PAREN_L,
@@ -133,6 +133,7 @@ fn characters (input: Span) -> IResult<Span, Token> {
                 &"{" => TokenData::CURLY_L,
                 &"}" => TokenData::CURLY_R,
                 &"," => TokenData::COMMA,
+                &":" => TokenData::COLON,
                 _   => unreachable!()
             };
             Ok(Token {

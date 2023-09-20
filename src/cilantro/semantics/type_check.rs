@@ -8,12 +8,23 @@ pub struct TypeError {
     pub expected: Option<Type>,
     pub found: Option<Type>,
 }
+
 impl TypeError {
     fn new (start: usize, msg: String, expected: Type, found: Type) -> Self {
         Self { start, msg, expected: Some(expected), found: Some(found) }
     }
     fn msg (start: usize, msg: String) -> Self {
         Self { start, msg, expected: None, found: None }
+    }
+}
+
+impl LElem {
+    pub fn node_data (&self) -> &NodeData {
+        if let Self::Node(n) = self {
+            &n.data
+        } else {
+            panic!("downcasting to node failed. Check callstack");
+        }
     }
 }
 
@@ -135,13 +146,13 @@ impl LNode {
             NodeData::Invoke { ident, args } => {
 
                 // Check Args
-                if let Some(ref args) = args {
+                if let Some(args) = args.clone() {
 
                     let sig = table.get_f(&ident);
 
                     // Extract Args
-                    let args = args.downcast_node();
-                    let args = if let NodeData::Args{ v } = &args.data { v } else { panic!() };
+                    let args = args.node_data();
+                    let args = if let NodeData::Args{ v } = &args { v } else { panic!() };
 
                     // Check arg length
                     if args.len() != sig.0.len() {
@@ -151,7 +162,18 @@ impl LNode {
                         ))
                     }
 
+                    /*
                     // TODO: Parameter/Argument Typing
+                    for (i, arg) in args.iter_mut().enumerate() {
+                        let (arg, t) = arg.type_check(table)?; 
+                        if t != sig.0[i] {
+                            return Err( TypeError::msg(
+                                self.start,
+                                format!("Argument lengths mismatched. expected {}, found {}", sig.0.len(), args.len())
+                            ))
+                        }
+                    }
+                    */
                 }
 
                 // Return function signature
@@ -197,12 +219,14 @@ impl LNode {
                 }
 
                 // TODO: parameter Typing
-                let param_t = if let Some(ref params) = params {
-                    let params = params.downcast_node();
-                    if let NodeData::Params { v } = &params.data {
-                        vec![Type::Void; v.len()]
-                    } else { panic!() }
-                } else { vec![] };
+                let param_t = 
+                    if let Some(ref params) = params {
+                        let params = params.node_data();
+                        if let NodeData::Params { v } = &params {
+                            v.iter().map(|(_, t)| t.clone()).collect()
+                            //vec![Type::Void; v.len()]
+                        } else { panic!() }
+                    } else { vec![] };
 
                 // Set signature
                 let sig = (param_t, r_type.clone());

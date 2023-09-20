@@ -68,7 +68,7 @@ impl Node {
                     .cast()
             },
             NodeT::Params => {
-                self.filter_tok(vec![TokenT::COMMA])
+                self.filter_tok(vec![TokenT::COMMA, TokenT::COLON])
                     .recurse()
                     .into_list()
                     .cast() 

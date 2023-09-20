@@ -91,7 +91,7 @@ pub enum NodeData {
         args: Option<ChildRef>,
     },
     Args { v: Vec<ChildRef> },
-    Params { v: Vec<String> },
+    Params { v: Vec<(String, Type)> },
 }
 
 impl NodeT {
