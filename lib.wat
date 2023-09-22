@@ -183,7 +183,7 @@
     (i32.wrap_i64)
   )
 
-  ;;@signature $print : void (string)
+  ;;@signature $print : void (str)
   (func $print (param $str i64) 
     (local $len i32)
 
@@ -196,6 +196,36 @@
     (call $str_ptr (local.get $str))
     (local.get $len)
     (memory.copy)
+
+    ;; Write iov
+    (i32.store (i32.const 0) (i32.const 8))
+    (i32.store (i32.const 4) (local.get $len))
+
+    (call $fd_write 
+      (i32.const 1)
+      (i32.const 0)
+      (i32.const 1)
+      (i32.const 8)
+    )
+    (drop)
+  )
+
+  ;;@signature $println : void (str)
+  (func $println (param $str i64) 
+    (local $len i32)
+
+    ;; Write len
+    (call $str_len (local.get $str))
+    (local.set $len)
+    
+    ;; Copy into memory
+    (i32.const 8)
+    (call $str_ptr (local.get $str))
+    (local.get $len)
+    (memory.copy)
+
+    ;; Write newline 
+    (i32.store8 (i32.add (local.get $len) (i32.const 8)) (i32.const 10))
 
     ;; Write iov
     (i32.store (i32.const 0) (i32.const 8))

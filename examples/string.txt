@@ -1,4 +1,4 @@
-func telemetry (label, val) -> void {
+func telemetry (label: str, val: i64) -> void {
   print(label)
   print64(val)
 }
@@ -11,3 +11,6 @@ let bananas = 6
 
 telemetry(orangeLbl, oranges)
 telemetry(bananaLbl, bananas)
+
+print("hello")
+print(" world")

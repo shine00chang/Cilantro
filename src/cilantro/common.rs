@@ -189,6 +189,11 @@ impl Productions {
         
         // Remove ROOT
         s.follows = s.make_follows();
+
+        for (k, v) in &s.follows {
+            println!("=={}==: \n{:?}\n", k, v);
+        }
+
         s.roots = roots.into_iter().collect();
         s.v.truncate(s.v.len()-i);
         s
@@ -298,13 +303,11 @@ impl Productions {
                         ts.into_iter().map(|t| ElemT::Token(t))
                     )
                     .collect::<HashSet<_>>();
-                
                 (key, s)
             })
             .collect();
         out
     }
-
 }
 
 

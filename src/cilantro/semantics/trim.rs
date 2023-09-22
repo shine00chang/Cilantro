@@ -1,24 +1,30 @@
 use super::*;
 use std::collections::HashSet;
 
+use TokenT::*;
 impl Node {
     /// Recursively removes grammatical elements from the syntax tree.
     /// Could collapse the element if it contains only one value.
     pub fn trim (mut self) -> Elem {
         match self.t {
             NodeT::Declaration => {
-                self.filter_tok(vec![TokenT::K_LET, TokenT::EQ_1]) 
+                self.filter_tok(vec![K_LET, ASSIGN]) 
+                    .recurse()
+                    .cast()
+            },
+            NodeT::If => {
+                self.filter_tok(vec![K_IF])
                     .recurse()
                     .cast()
             },
             NodeT::Return => {
-                self.filter_tok(vec![TokenT::K_RETURN])
+                self.filter_tok(vec![K_RETURN])
                     .recurse()
                     .cast()
             },
             NodeT::Invoke => {
                 self = self
-                    .filter_tok(vec![TokenT::PAREN_L, TokenT::PAREN_R])
+                    .filter_tok(vec![PAREN_L, PAREN_R])
                     .recurse();
 
                 if self.children.len() > 1 {
@@ -31,7 +37,7 @@ impl Node {
                 self.cast()
             },
             NodeT::Args => {
-                self.filter_tok(vec![TokenT::COMMA])
+                self.filter_tok(vec![COMMA])
                     .recurse()
                     .into_list()
                     .cast()
@@ -46,7 +52,17 @@ impl Node {
                     .collapse_if_1()
             },
             NodeT::T2 => {
-                self.filter_tok(vec![TokenT::PAREN_L, TokenT::PAREN_R])
+                self.change_t(NodeT::Expr)
+                    .recurse()
+                    .collapse_if_1()
+            },
+            NodeT::T3 => {
+                self.change_t(NodeT::Expr)
+                    .recurse()
+                    .collapse_if_1()
+            },
+            NodeT::TBase => {
+                self.filter_tok(vec![PAREN_L, PAREN_R])
                     .change_t(NodeT::Expr)
                     .recurse()
                     .collapse_if_1()
@@ -56,20 +72,20 @@ impl Node {
                     .collapse_if_1()
             },
             NodeT::Function => {
-                self.filter_tok(vec![TokenT::K_FUNC, TokenT::PAREN_L, TokenT::PAREN_R, TokenT::ARROW])
+                self.filter_tok(vec![K_FUNC, PAREN_L, PAREN_R, ARROW])
                     .recurse()
                     .cast()
             },
             NodeT::Block => {
                 self = self
-                    .filter_tok(vec![TokenT::CURLY_L, TokenT::CURLY_R])
+                    .filter_tok(vec![CURLY_L, CURLY_R])
                     .recurse();
 
-                // Consume child "List", set its children as own.
-                if let Elem::Node(list) = self.children.pop().unwrap() {
+                // If not empty, Consume child "List", set its children as own.
+                if let Some(Elem::Node(list)) = self.children.pop() {
                     assert!(list.t.is_list());
                     self.children = list.children;
-                }
+                } 
 
                 self.cast()
             },
@@ -79,7 +95,7 @@ impl Node {
                     .cast()
             },
             NodeT::Params => {
-                self.filter_tok(vec![TokenT::COMMA, TokenT::COLON])
+                self.filter_tok(vec![COMMA, COLON])
                     .recurse()
                     .into_list()
                     .cast() 

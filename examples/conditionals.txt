@@ -1,0 +1,10 @@
+let a = true
+let b = false
+
+if a && b {
+  println("and")
+}
+if a || b {
+  println("or")
+}
+

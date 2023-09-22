@@ -50,7 +50,28 @@ impl Node {
                 let expr = Box::new(expr);
 
                 NodeData::Return { expr }
-            }
+            },
+            NodeT::If => {
+                // Get Block (in reverse since we are pop()'ing)
+                let block = if let Elem::Node(n) = self.children.pop().unwrap() {
+                    assert!(n.t.is_block());
+                    let elem = LElem::Node(n.extract());
+                    Box::new( elem )
+                } else { panic!("'If' expected Block as last child.") };
+
+
+                // Get Expression
+                let expr = self.children.pop().unwrap();
+                assert!(expr.t().is_evaluable());
+                let expr = match expr { 
+                    Elem::Node(n)  => LElem::Node(n.extract()),
+                    Elem::Token(t) => LElem::Token(LToken::from(t))
+                };
+                let expr = Box::new(expr);
+                
+
+                NodeData::If { expr, block }
+            },
             NodeT::Invoke => {
                 // Get Function name
                 let ident = if let Elem::Token(t) = &self.children[0] {
@@ -104,9 +125,12 @@ impl Node {
             NodeT::Expr => {
                 let op = if let Elem::Token(t) = &self.children[1] {
                     match &t.data {
-                        TokenData::NUMOP_1(op) => op,
-                        TokenData::NUMOP_2(op) => op,
-                        _ => panic!()
+                        TokenData::OP1_b(op) |
+                        TokenData::OP2_b(op) | 
+                        TokenData::OP3_n(op) | 
+                        TokenData::OP4_n(op) | 
+                        TokenData::OP_UNARY(op) => op,
+                        t @ _ => panic!("Found a non-operator token in expression: {t}")
                     }.clone()
                 } else { panic!() };
 

@@ -6,6 +6,7 @@ use strum_macros::{EnumIter, EnumDiscriminants};
 pub enum Type {
     Void,
     Int,
+    Bool,
     String,
 }
 impl Default for Type {
@@ -30,15 +31,20 @@ pub enum TokenData {
     K_LET,
     K_FUNC,
     K_RETURN,
+    K_IF,
 
-    EQ_1,
-    EQ_2,
     IDENT(String),
+    ASSIGN,
+
     INT(i64),
     STR_LIT(String),
     BOOL(bool),
-    NUMOP_1(String),
-    NUMOP_2(String),
+
+    OP1_b(String),
+    OP2_b(String),
+    OP3_n(String),
+    OP4_n(String),
+    OP_UNARY(String),
     TYPE(Type),
     
     PAREN_L,
@@ -73,6 +79,10 @@ pub enum NodeData {
     Block { v: Vec<ChildRef> },
     List,
 
+    If {
+        expr: ChildRef,
+        block: ChildRef,
+    },
     Declaration { 
         ident: String,
         expr: ChildRef,
@@ -82,8 +92,7 @@ pub enum NodeData {
         t2: ChildRef,
         op: String, 
     },
-    T1, 
-    T2, 
+    T1, T2, T3, TBase, 
 
     Return { expr: ChildRef },
     Invoke {
@@ -97,7 +106,7 @@ pub enum NodeData {
 impl NodeT {
     pub fn is_evaluable (&self) -> bool {
         match self {
-            NodeT::Expr | NodeT::Invoke => true,
+            Expr | Invoke => true,
             _ => false,
         }
     }
@@ -105,7 +114,7 @@ impl NodeT {
 impl TokenT {
     pub fn is_evaluable (&self) -> bool {
         match self {
-            TokenT::INT | TokenT::IDENT | TokenT::STR_LIT => true,
+            INT | TokenT::IDENT | TokenT::STR_LIT => true,
             _ => false,
         }
     }
@@ -113,150 +122,116 @@ impl TokenT {
 impl ElemT {
     pub fn is_evaluable (&self) -> bool {
         match self {
-            ElemT::Node(t)  => t.is_evaluable(),
-            ElemT::Token(t) => t.is_evaluable()
+            Node(t)  => t.is_evaluable(),
+            Token(t) => t.is_evaluable()
         }
     }
 }
 
+use ElemT::Node as Node;
+use ElemT::Token as Token;
+use NodeT::*;
+use TokenT::*;
 impl Productions {
     pub fn make () -> Self {
         let apices = vec![
-            NodeT::Statement,
-            NodeT::Function,
-            NodeT::Block
+            Statement,
+            Function,
         ];
         let v = vec![
             (
-                NodeT::Block,
-                vec![ vec![
-                    ElemT::Token(TokenT::CURLY_L),
-                    ElemT::Node(NodeT::List),
-                    ElemT::Token(TokenT::CURLY_R)
-                ] ]
+                Block,
+                vec![
+                    vec![ Token(CURLY_L), Node(List), Token(CURLY_R) ],
+                    vec![ Token(CURLY_L), Token(CURLY_R) ]
+                ]
             ),
             (
-                NodeT::List,
-                vec![ 
-                    vec![ElemT::Node(NodeT::Statement)],
-                    vec![
-                        ElemT::Node(NodeT::List),
-                        ElemT::Node(NodeT::Statement),
-                    ]
-                ]
+                List,
+                vec![vec![ Node(List), Node(Statement) ], vec![ Node(Statement) ]]
             ),
             ( 
-                NodeT::Params,
+                Params,
                 vec![ 
-                    vec![
-                        ElemT::Token(TokenT::IDENT),
-                        ElemT::Token(TokenT::COLON),
-                        ElemT::Token(TokenT::TYPE),
-                    ],
-                    vec![
-                        ElemT::Node(NodeT::Params),
-                        ElemT::Token(TokenT::COMMA),
-                        ElemT::Token(TokenT::IDENT),
-                        ElemT::Token(TokenT::COLON),
-                        ElemT::Token(TokenT::TYPE),
-                    ]
+                    vec![ Token(IDENT), Token(COLON), Token(TYPE) ],
+                    vec![ Node(Params), Token(COMMA), Token(IDENT), Token(COLON), Token(TYPE) ]
                 ]
             ),
             (
-                NodeT::Function,
+                Function,
                 vec![
                     vec![
-                        ElemT::Token(TokenT::K_FUNC),
-                        ElemT::Token(TokenT::IDENT),
-                        ElemT::Token(TokenT::PAREN_L),
-                        ElemT::Node(NodeT::Params),
-                        ElemT::Token(TokenT::PAREN_R),
-                        ElemT::Token(TokenT::ARROW), 
-                        ElemT::Token(TokenT::TYPE), 
-                        ElemT::Node(NodeT::Block),
+                        Token(K_FUNC), Token(IDENT), Token(PAREN_L), Node(Params), Token(PAREN_R),
+                        Token(ARROW), Token(TYPE), 
+                        Node(Block),
                     ],
                     vec![
-                        ElemT::Token(TokenT::K_FUNC),
-                        ElemT::Token(TokenT::IDENT),
-                        ElemT::Token(TokenT::PAREN_L),
-                        ElemT::Token(TokenT::PAREN_R),
-                        ElemT::Token(TokenT::ARROW), 
-                        ElemT::Token(TokenT::TYPE),
-                        ElemT::Node(NodeT::Block),
+                        Token(K_FUNC), Token(IDENT), Token(PAREN_L), Token(PAREN_R),
+                        Token(ARROW), Token(TYPE),
+                        Node(Block),
                     ],
                 ]
             ),
             (
-                NodeT::Statement,
+                Statement,
                 vec![
-                    vec![ElemT::Node(NodeT::Declaration)],
-                    vec![ElemT::Node(NodeT::Block)],
-                    vec![ElemT::Node(NodeT::Invoke)],
-                    vec![ElemT::Node(NodeT::Return)]
+                    vec![Node(Declaration)],
+                    vec![Node(Block)],
+                    vec![Node(Invoke)],
+                    vec![Node(If)],
+                    vec![Node(Return)]
                 ]
             ),
             ( 
-                NodeT::Declaration,
-                vec![ vec![ 
-                    ElemT::Token(TokenT::K_LET),
-                    ElemT::Token(TokenT::IDENT),
-                    ElemT::Token(TokenT::EQ_1),
-                    ElemT::Node(NodeT::Expr)
-                ] ]
+                Declaration,
+                vec![vec![ Token(K_LET), Token(IDENT), Token(ASSIGN), Node(Expr) ]]
             ),
             ( 
-                NodeT::Return,
-                vec![ vec![ 
-                    ElemT::Token(TokenT::K_RETURN),
-                    ElemT::Node(NodeT::Expr)
-                ] ]
+                If,
+                vec![vec![ Token(K_IF), Node(Expr), Node(Block) ]]
+            ),
+            ( 
+                Return,
+                vec![vec![ Token(K_RETURN), Node(Expr) ]]
             ),
             (
-                NodeT::Invoke,
+                Invoke,
                 vec![ 
-                    vec![
-                        ElemT::Token(TokenT::IDENT),
-                        ElemT::Token(TokenT::PAREN_L),
-                        ElemT::Node(NodeT::Args),
-                        ElemT::Token(TokenT::PAREN_R)
-                    ],
-                    vec![
-                        ElemT::Token(TokenT::IDENT),
-                        ElemT::Token(TokenT::PAREN_L),
-                        ElemT::Token(TokenT::PAREN_R)
-                    ]
+                    vec![ Token(IDENT), Token(PAREN_L), Node(Args), Token(PAREN_R) ],
+                    vec![ Token(IDENT), Token(PAREN_L), Token(PAREN_R) ]
                 ]
             ),
             ( 
-                NodeT::Args,
-                vec![ 
-                    vec![ElemT::Node(NodeT::Expr)],
-                    vec![ElemT::Node(NodeT::Args), ElemT::Token(TokenT::COMMA), ElemT::Node(NodeT::Expr)]
-                ]
+                Args,
+                vec![ vec![Node(Args), Token(COMMA), Node(Expr)], vec![Node(Expr)] ]
             ),
             // Expressions
             ( 
-                NodeT::Expr,
-                vec![
-                    vec![ ElemT::Node(NodeT::T1), ElemT::Token(TokenT::NUMOP_1), ElemT::Node(NodeT::Expr)],
-                    vec![ ElemT::Node(NodeT::T1) ]
-                ]
+                Expr,
+                vec![vec![ Node(T1), Token(OP1_b), Node(Expr)], vec![ Node(T1) ]]
             ),
             ( 
-                NodeT::T1,
-                vec![ 
-                    vec![ ElemT::Node(NodeT::T2), ElemT::Token(TokenT::NUMOP_2), ElemT::Node(NodeT::T1)],
-                    vec![ ElemT::Node(NodeT::T2) ]
-                ],
+                T1,
+                vec![vec![ Node(T2), Token(OP2_b), Node(T1)], vec![ Node(T2) ]],
             ),
             ( 
-                NodeT::T2,
+                T2,
+                vec![vec![ Node(T3), Token(OP3_n), Node(T2)], vec![ Node(T3) ]],
+            ),
+            ( 
+                T3,
+                vec![vec![ Node(TBase), Token(OP4_n), Node(T3)], vec![ Node(TBase) ]],
+            ),
+            ( 
+                TBase,
                 vec![
-                    vec![ ElemT::Node(NodeT::Invoke) ],
-                    vec![ ElemT::Token(TokenT::INT) ],
-                    vec![ ElemT::Token(TokenT::IDENT) ],
-                    vec![ ElemT::Token(TokenT::STR_LIT) ],
-                    vec![ ElemT::Token(TokenT::PAREN_L), ElemT::Node(NodeT::Expr), ElemT::Token(TokenT::PAREN_R) ]
+                    vec![ Node(Invoke) ],
+                    vec![ Token(INT) ],
+                    vec![ Token(BOOL) ],
+                    vec![ Token(IDENT) ],
+                    vec![ Token(STR_LIT) ],
+                    vec![ Token(OP_UNARY), Node(TBase) ],
+                    vec![ Token(PAREN_L), Node(Expr), Token(PAREN_R) ]
                 ],
             ),
         ];
@@ -266,18 +241,18 @@ impl Productions {
     #[cfg(test)]
     pub fn make_test () -> Self {
         let apices = vec![
-            NodeT::S
+            S
         ];
         let v = vec![
             (
-                NodeT::S,
-                vec![ vec![ ElemT::Node(NodeT::A), ElemT::Node(NodeT::A) ] ]
+                S,
+                vec![ vec![ Node(A), Node(A) ] ]
             ),
             ( 
-                NodeT::A,
+                A,
                 vec![ 
-                    vec![ ElemT::Token(TokenT::b) ],
-                    vec![ ElemT::Token(TokenT::a), ElemT::Node(NodeT::A) ]
+                    vec![ Token(b) ],
+                    vec![ Token(a), Node(A) ]
                 ]
             )
         ];

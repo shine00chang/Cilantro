@@ -109,15 +109,43 @@ impl LNode {
                     ));
                 }
 
+                let t = match (t1_t, op.as_str(), t2_t) {
+                    (_, "==" ,_) => Type::Bool,
+                    (Type::Bool, "||" | "&&"  ,Type::Bool) => Type::Bool,
+                    (Type::Int, "*" | "+" | "-" | "/", Type::Int) => Type::Int,
+                    (t1 @ _, op @ _, t2 @ _) => panic!("invalid operands. Cannot apply operator '{op}' on terms {t1} and {t2}")
+                };
+
                 (
                 NodeData::Expr{
                     t1: Box::new(t1),
                     t2: Box::new(t2),
                     op,
                 },
-                t1_t
+                t 
                 )
             },
+            NodeData::If { expr, block } => {
+                let (expr, t) = expr.type_check(table)?;
+                
+                // Expression type must be boolean
+                if t != Type::Bool {
+                    return Err( TypeError::new(
+                        expr.start(),
+                        "If statement expression does not evaluate to a boolean".to_owned(),
+                        Type::Bool,
+                        t 
+                    ));
+                }
+                
+                (
+                NodeData::If { 
+                    expr: Box::new(expr),
+                    block
+                },
+                t
+                )
+            }
             NodeData::Return { expr } => {
                 let (expr, t) = expr.type_check(table)?;
 
@@ -260,6 +288,7 @@ impl LToken {
     fn type_check (self, table: &mut TypeTable) -> (LToken, Type) {
         let t = match &self.data {
             TokenData::INT(_)       => Type::Int,
+            TokenData::BOOL(_)      => Type::Bool,
             TokenData::STR_LIT(_)   => Type::String,
             TokenData::IDENT(ident) => table.get_v(ident).clone(),
             data @ _ => panic!("Typing unimplemented for token {}", TokenT::from(data))

@@ -61,7 +61,6 @@ fn bol (input: Span) -> IResult<Span, Token> {
 
 fn str_lit (input: Span) -> IResult<Span, Token> {
     ws(map_res(
-//        delimited(char('"'), not_line_ending, char('"')),
         delimited(char('"'), take_until("\""), char('"')),
         |s: Span| -> Result<Token, std::str::ParseBoolError> {
             Ok(Token {
@@ -80,13 +79,13 @@ pub fn types (input: Span) -> IResult<Span, Token> {
         alt((
             tag("i64"),
             tag("void"), 
-            tag("string"),
+            tag("str"),
         )),
         |s: Span| -> Result<Token, nom::error::Error<Span>> {
             let t = match s.fragment() {
                 &"i64"  => Type::Int,
                 &"void" => Type::Void,
-                &"string" => Type::String,
+                &"str" => Type::String,
                 _   => unreachable!()
             };
             Ok(Token {
@@ -103,13 +102,11 @@ fn symbols (input: Span) -> IResult<Span, Token> {
     ws(map_res(
         alt((
             tag("="),
-            tag("=="), 
             tag("->")
         )),
         |s: Span| -> Result<Token, nom::error::Error<Span>> {
             let data = match s.fragment() {
-                &"="  => TokenData::EQ_1,
-                &"==" => TokenData::EQ_2,
+                &"="  => TokenData::ASSIGN,
                 &"->" => TokenData::ARROW,
                 _   => unreachable!()
             };
@@ -180,42 +177,76 @@ fn ident (input: Span) -> IResult<Span, Token> {
 }
 
 
-fn num_op_p1 (input: Span) -> IResult<Span, Token> {
+fn op_tags (input: Span) -> IResult<Span, Token> {
     ws(map_res(
-        recognize(one_of("+-")),
+        recognize(alt((
+            tag("=="),
+            tag("&&"),
+            tag("||")
+        ))),
         |s: Span| -> Result<Token, nom::error::Error<Span>> {
+            let data = match s.fragment() {
+                &"==" => TokenData::OP1_b("==".to_owned()),
+                &"&&" => TokenData::OP2_b("&&".to_owned()),
+                &"||" => TokenData::OP2_b("||".to_owned()),
+                s @ _ => panic!("Unknown operator tag '{}'", s)
+            };
             Ok(Token {
                 start: s.location_offset(),
                 end: s.location_offset() + s.len(),
-                data: TokenData::NUMOP_1(s.fragment().to_string())
+                data
             })
         }
     ))(input)
 }
 
-fn num_op_p2 (input: Span) -> IResult<Span, Token> {
+
+fn op_symbols (input: Span) -> IResult<Span, Token> {
     ws(map_res(
-        alt((tag("*"), tag("/"))),
+        recognize(one_of("/*+=")),
         |s: Span| -> Result<Token, nom::error::Error<Span>> {
+            let data = match s.fragment() {
+                &"*" => TokenData::OP4_n("*".to_owned()),
+                &"/" => TokenData::OP4_n("/".to_owned()),
+                &"+" => TokenData::OP3_n("+".to_owned()),
+                &"-" => TokenData::OP3_n("-".to_owned()),
+                s @ _ => panic!("Unknown operator symbol '{}'", s)
+            };
             Ok(Token {
                 start: s.location_offset(),
                 end: s.location_offset() + s.len(),
-                data: TokenData::NUMOP_2(s.fragment().to_string())
+                data 
             })
         }
     ))(input)
 }
+
+fn op_unary (input: Span) -> IResult<Span, Token> {
+    ws(map_res(
+        recognize(one_of("!-")),
+        |s: Span| -> Result<Token, nom::error::Error<Span>> {
+            Ok(Token {
+                start: s.location_offset(),
+                end: s.location_offset() + s.len(),
+                data: TokenData::OP_UNARY(s.to_string())
+            })
+        }
+    ))(input)
+}
+
 
 
 
 pub fn tokenize (source: String) -> Tokens {
-
     let span = Span::new(&source);
     let parsers = (
         symbols,
         characters,
-        num_op_p1,
-        num_op_p2,
+
+        op_unary,
+        op_tags,
+        op_symbols,
+
         types,
         int,
         bol,
@@ -226,6 +257,7 @@ pub fn tokenize (source: String) -> Tokens {
         keyword("let", TokenData::K_LET),
         keyword("func", TokenData::K_FUNC),
         keyword("return", TokenData::K_RETURN),
+        keyword("if", TokenData::K_IF),
 
         ident,
     );

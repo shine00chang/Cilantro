@@ -22,9 +22,10 @@ impl LNode {
 
                 // Write return type
                 match r_type {
-                    Type::Int => func.prefix("(result i64)".to_owned()),
-                    Type::Void => (),
-                    Type::String => panic!("String output not implemented")
+                    Type::Int    => func.prefix("(result i64)".to_owned()),
+                    Type::Bool   => func.prefix("(result i32)".to_owned()),
+                    Type::String => func.prefix("(result i64)".to_owned()),
+                    Type::Void   => ()
                 }               
 
                 // Block
@@ -32,12 +33,12 @@ impl LNode {
 
                 prog.add_func(func);
             },
-            NodeData::Params{ v }=> {
+            NodeData::Params{ v } => {
                 for (ident, t) in v {
                     func.prefix(format!("(param ${ident} {})", t.gen()));
                 }
             },
-            NodeData::Block { v }=> {
+            NodeData::Block { v } => {
                 for child in v {
                     child.codegen(prog, func);
                 }
@@ -47,12 +48,23 @@ impl LNode {
                 let expr_t = expr.t();
 
                 // Declare local variable
-                println!("{}", expr_t);
                 func.prefix(format!("(local ${ident} {})", expr_t.gen()));
 
                 // Expand Expression
                 func.push_s(format!("(local.set ${}", ident));
                 expr.codegen(prog, func);
+                func.push(")");
+            },
+            NodeData::If{ expr, block } => {
+
+                if let LElem::Node(expr) = &**expr {
+                    expr.codegen(prog, func);
+                } else { panic!() };
+
+                func.push("(if");
+                func.push("(then");
+                block.codegen(prog, func);
+                func.push(")");
                 func.push(")");
             },
             NodeData::Return { expr } => {
@@ -82,6 +94,21 @@ impl LNode {
                         t2.codegen(prog, func);
                         func.push(")");
                     },
+                    Type::Bool => {
+                        let a = match &op[..] {
+                            "||" => Some("(i32.or"),
+                            "&&" => Some("(i32.and"),
+                            "==" => None,
+                            _ => panic!()
+                        };
+                        func.push("(i32.ge_u");
+                        if let Some(a) = a { func.push(a) } 
+                        t1.codegen(prog, func);
+                        t2.codegen(prog, func);
+                        if let Some(_) = a { func.push(")") } 
+                        func.push("(i32.const 1)");
+                        func.push(")");
+                    },
                     _ => panic!("Expressions not implemented for type {}", self.t)
                 }
             },
@@ -96,6 +123,10 @@ impl LToken {
             TokenData::INT(n) => {
                 func.push_s(format!("(i64.const {})", n));
             },
+            TokenData::BOOL(b) => {
+                func.push_s(format!("(i32.const {})", if *b { 1 } else { 0 }));
+            },
+
             TokenData::IDENT(ident) => {
                 func.push_s(format!("(local.get ${})", ident));
             }
@@ -118,7 +149,8 @@ impl LToken {
 impl Type {
     fn gen (&self) -> &str {
         match self {
-            Type::Int => "i64",
+            Type::Int    => "i64",
+            Type::Bool   => "i32",
             Type::String => "i64",
             _ => panic!("codegen unimplemented for type {}", self)
         }

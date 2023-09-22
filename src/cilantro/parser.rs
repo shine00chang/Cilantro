@@ -48,13 +48,15 @@ impl<'a> Parser<'a> {
         let mut l: Vec<(Elem, usize)> = vec![];
         let mut r: Vec<_> = self.tokens.into_iter().map(|t| Elem::Token(t)).rev().collect();
 
+        println!("parsing...");
         loop {
             //print_stacks(&l, &r);
 
-            // Exit condition: If only token left is EOF and the last node it a root
+            // Exit condition: If only token left is EOF and the last node is a root
             if r.len() == 1 {
                 if let Elem::Node(node) = &l.last().unwrap().0 {
                     if self.productions.roots.contains(&node.t) {
+                        println!("quiting with last node as root: {}", node);
                         break;
                     }
                 }
@@ -64,7 +66,7 @@ impl<'a> Parser<'a> {
             let s = if let Some((_, s)) = l.last() { *s } else { 0 };
 
             let action = self.table[s].get(&t.t());
-            
+
             // Unfilled cell in table should mean syntax error
             if action.is_none() {
                 // To satisfy borrow checker, since 'tokens' was moved.
@@ -96,7 +98,7 @@ impl<'a> Parser<'a> {
             .map(|elem| 
                 if let Elem::Node(node) = elem.0 { node }
                 // There should not be a token in the resulting stream.
-                else { panic!("unreachable") }
+                else { panic!("Parser did not remove all tokens. Check definition of 'root' nodes.") }
             )
             .collect();
         out
@@ -124,17 +126,18 @@ impl<'a> Parser<'a> {
                 if a == 0 { break }
             }
             let mut b = r.end();
+            println!("{}", b);
+            println!("{}", &self.source[0..=b]);
             for _ in 0..20 {
                 if b == self.source.len() || self.source.as_bytes()[b].is_ascii_control() { 
-                    b -= 1;
                     break
                 }
                 b += 1;
             }
             // Segment
             print!("    ");
-            for c in self.source[a..b].chars() {
-                assert!(!c.is_ascii_control());
+            for mut c in self.source[a..b].chars() {
+                if c == '\n' { c = ' '; }
                 let c = c.escape_debug();
                 print!("{}", c);
             } 

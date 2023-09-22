@@ -186,10 +186,10 @@ impl Productions {
             table[0].insert(ElemT::Node(root.clone()), Action::Shift(0));
         }
 
-        /*
+        
         println!("PARSING TABLE:");
         println!("{}", visualizer::print_table(&table).unwrap());
-        */
+        
 
         table
     }

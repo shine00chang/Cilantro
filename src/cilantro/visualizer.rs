@@ -198,17 +198,18 @@ impl LNode {
 
     fn get_children (&self) -> Vec<&Box<LElem>> {
         match &self.data {
-            NodeData::Declaration { ident:_, expr } => vec![expr],
-            NodeData::Function { ident:_, params, r_type:_, block } => 
+            NodeData::Declaration { expr, .. } => vec![expr],
+            NodeData::Function { params, block, .. } => 
                 if let Some(params) = params {
                     vec![params, block]
                 } else { 
                     vec![block]
                 },
             NodeData::Block { v } => v.iter().map(|x| x).collect(),
-            NodeData::Invoke { ident:_, args } => args.iter().map(|x| x).collect(), 
-            NodeData::Expr { t1, t2, op:_ } => vec![t1, t2],
+            NodeData::Invoke { args, .. } => args.iter().map(|x| x).collect(), 
+            NodeData::Expr { t1, t2, .. } => vec![t1, t2],
             NodeData::Return { expr } => vec![expr],
+            NodeData::If { expr, block } => vec![expr, block],
             _ => vec![],
         }
     }
@@ -219,19 +220,20 @@ impl LNode {
         write!(f, "{{ ")?;
 
         match &self.data {
-            NodeData::Function { ident, params:_, r_type, block:_ } => {
+            NodeData::Function { ident, r_type, .. } => {
                 write!(f, "ident: {:?}, ", ident)?;
                 write!(f, "r_type: {}, ", r_type)?;
             },
-            NodeData::Declaration { ident, expr:_ } => 
+            NodeData::Declaration { ident, .. } => 
                 write!(f, "ident: {:?}, ", ident)?,
-               
-            NodeData::Expr { t1:_, t2:_, op } => 
+            NodeData::Expr { op, .. } => 
                 write!(f, "op: {:?}, ", op)?,
-            NodeData::Invoke { ident, args:_ } => 
+            NodeData::Invoke { ident, .. } => 
                 write!(f, "ident: {:?}, ", ident)?,
             NodeData::Params { v } => 
                 write!(f, "{:?}, ", v)?,
+            NodeData::If{ .. } =>
+                write!(f, "none")?,
             _ => write!(f, "no impl")? 
         };
         write!(f, " }}")?;
