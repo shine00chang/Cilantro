@@ -98,7 +98,7 @@ pub fn types (input: Span) -> IResult<Span, Token> {
 }
 
 
-fn symbols (input: Span) -> IResult<Span, Token> {
+fn tags (input: Span) -> IResult<Span, Token> {
     ws(map_res(
         alt((
             tag("="),
@@ -120,7 +120,7 @@ fn symbols (input: Span) -> IResult<Span, Token> {
 }
 
 
-fn characters (input: Span) -> IResult<Span, Token> {
+fn symbols (input: Span) -> IResult<Span, Token> {
     ws(map_res(
         recognize(one_of("(){},:")),
         |s: Span| -> Result<Token, nom::error::Error<Span>> {
@@ -205,7 +205,7 @@ fn op_tags (input: Span) -> IResult<Span, Token> {
 
 fn op_symbols (input: Span) -> IResult<Span, Token> {
     ws(map_res(
-        recognize(one_of("/*+")),
+        recognize(one_of("/*+-")),
         |s: Span| -> Result<Token, nom::error::Error<Span>> {
             let data = match s.fragment() {
                 &"*" => TokenData::OP4_n("*".to_owned()),
@@ -225,7 +225,7 @@ fn op_symbols (input: Span) -> IResult<Span, Token> {
 
 fn op_unary (input: Span) -> IResult<Span, Token> {
     ws(map_res(
-        recognize(one_of("!-")),
+        recognize(one_of("!")),
         |s: Span| -> Result<Token, nom::error::Error<Span>> {
             Ok(Token {
                 start: s.location_offset(),
@@ -251,17 +251,17 @@ pub fn tokenize (source: String) -> Tokens {
         keyword("return", TokenData::K_RETURN),
         keyword("if", TokenData::K_IF),
 
-        op_tags,
-        op_symbols,
-        op_unary,
-
+        bol,
         types,
         int,
-        bol,
-        str_lit,
 
+        op_tags,
+        tags,
+        op_unary,
+        op_symbols,
         symbols,
-        characters,
+
+        str_lit,
         ident,
     );
     let mut parser = many1(alt(parsers));

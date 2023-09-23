@@ -41,6 +41,8 @@ fn main () {
     println!("Compiling module...");
     let module = Module::from_file(&engine, "out/prog.wat").expect("Could not build module");
     linker.module(&mut store, "", &module).expect("Could not link");
+
+    println!("Running...\n=== OUTPUT ===");
     linker
         .get_default(&mut store, "").unwrap()
         .typed::<(), ()>(&store).unwrap()

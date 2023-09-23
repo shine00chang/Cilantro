@@ -31,14 +31,19 @@ pub fn from_source (source: String) -> std::io::Result<()> {
     println!("Abstract Syntax Tree:");
     nodes.iter().for_each(|n| print!("{n}"));
 
+    println!("Generating WASI...");
     let code = codegen::gen(nodes);
+    /*
     println!("Generated code:");
     println!("{code}");
+    */ 
 
     // Write to 'out/prog.wat'
     let path = "out/prog.wat";
     let mut file = File::create(path).expect(format!("Could not create file '{}'", path).as_str());
     file.write_all(code.as_bytes()).expect(format!("Could not write to file '{}'", path).as_str());
+
+    println!("Generated code written to '{path}'");
 
     Ok(())
 }

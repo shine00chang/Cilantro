@@ -1,5 +1,5 @@
 let A = 2
 let B = 3
 let C = A + B
-print_int(C)
-print_int(A + B * C + A)
+print64(C)
+print64(A + B * C + A)

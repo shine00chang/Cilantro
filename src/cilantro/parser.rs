@@ -126,8 +126,6 @@ impl<'a> Parser<'a> {
                 if a == 0 { break }
             }
             let mut b = r.end();
-            println!("{}", b);
-            println!("{}", &self.source[0..=b]);
             for _ in 0..20 {
                 if b == self.source.len() || self.source.as_bytes()[b].is_ascii_control() { 
                     break

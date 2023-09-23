@@ -190,9 +190,11 @@ impl Productions {
         // Remove ROOT
         s.follows = s.make_follows();
 
+        /*
         for (k, v) in &s.follows {
             println!("=={}==: \n{:?}\n", k, v);
         }
+        */
 
         s.roots = roots.into_iter().collect();
         s.v.truncate(s.v.len()-i);

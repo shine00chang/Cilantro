@@ -233,7 +233,7 @@ impl LNode {
             NodeData::Params { v } => 
                 write!(f, "{:?}, ", v)?,
             NodeData::If{ .. } =>
-                write!(f, "none")?,
+                write!(f, "_")?,
             _ => write!(f, "no impl")? 
         };
         write!(f, " }}")?;
