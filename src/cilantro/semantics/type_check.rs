@@ -200,7 +200,6 @@ impl LNode {
 
                 // Return function signature
                 let sig = table.get_f(&ident);
-                println!("{:?}", sig);
 
                 (
                 NodeData::Invoke { ident, args },
