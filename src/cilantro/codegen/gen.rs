@@ -80,6 +80,21 @@ impl LNode {
                 func.push(")");
             },
             NodeData::Expr{ op, t1, t2 } => {
+
+                // Equality 
+                if matches!(&op[..], "==" | "!=") {
+                    func.push_s(format!(
+                        "({}.{}",
+                        t1.t().gen(),
+                        if &op[..] == "==" { "eq" } else { "ne" }
+                    ));
+                    t1.codegen(prog, func);
+                    t2.codegen(prog, func);
+                    func.push(")");
+                    
+                    return
+                }
+
                 match self.t {
                     Type::Int => {
                         let a = match &op[..] {
@@ -87,7 +102,7 @@ impl LNode {
                             "-" => "(i64.sub",
                             "*" => "(i64.mul",
                             "/" => "(i64.div",
-                            _ => panic!()
+                            op @ _ => panic!("found unimplemented integer operator: {op}")
                         };
                         func.push(a);
                         t1.codegen(prog, func);
@@ -98,15 +113,16 @@ impl LNode {
                         let a = match &op[..] {
                             "||" => Some("(i32.or"),
                             "&&" => Some("(i32.and"),
-                            "==" => None,
-                            _ => panic!()
+                            op @ _ => panic!("found unimplemented boolean operator: {op}")
                         };
                         func.push("(i32.ge_u");
                         if let Some(a) = a { func.push(a) } 
                         t1.codegen(prog, func);
                         t2.codegen(prog, func);
-                        if let Some(_) = a { func.push(")") } 
-                        func.push("(i32.const 1)");
+                        if let Some(_) = a { 
+                            func.push("(i32.const 1)");
+                            func.push(")");
+                        } 
                         func.push(")");
                     },
                     _ => panic!("Expressions not implemented for type {}", self.t)

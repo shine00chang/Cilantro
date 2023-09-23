@@ -181,12 +181,14 @@ fn op_tags (input: Span) -> IResult<Span, Token> {
     ws(map_res(
         recognize(alt((
             tag("=="),
+            tag("!="),
             tag("&&"),
             tag("||")
         ))),
         |s: Span| -> Result<Token, nom::error::Error<Span>> {
             let data = match s.fragment() {
                 &"==" => TokenData::OP1_b("==".to_owned()),
+                &"!=" => TokenData::OP1_b("!=".to_owned()),
                 &"&&" => TokenData::OP2_b("&&".to_owned()),
                 &"||" => TokenData::OP2_b("||".to_owned()),
                 s @ _ => panic!("Unknown operator tag '{}'", s)
@@ -203,7 +205,7 @@ fn op_tags (input: Span) -> IResult<Span, Token> {
 
 fn op_symbols (input: Span) -> IResult<Span, Token> {
     ws(map_res(
-        recognize(one_of("/*+=")),
+        recognize(one_of("/*+")),
         |s: Span| -> Result<Token, nom::error::Error<Span>> {
             let data = match s.fragment() {
                 &"*" => TokenData::OP4_n("*".to_owned()),
@@ -239,26 +241,27 @@ fn op_unary (input: Span) -> IResult<Span, Token> {
 
 pub fn tokenize (source: String) -> Tokens {
     let span = Span::new(&source);
-    let parsers = (
-        symbols,
-        characters,
 
-        op_unary,
+    // NOTE: Rule for parser order. More general parsers should go in the bottom, that way the more
+    // specific ones will filter first, before the general ones capture it.
+    
+    let parsers = (
+        keyword("let", TokenData::K_LET),
+        keyword("func", TokenData::K_FUNC),
+        keyword("return", TokenData::K_RETURN),
+        keyword("if", TokenData::K_IF),
+
         op_tags,
         op_symbols,
+        op_unary,
 
         types,
         int,
         bol,
         str_lit,
 
-        // NOTE: Ident has to be placed *AFTER* keywords, otherwise it will treat every keyword as an
-        // identifier.
-        keyword("let", TokenData::K_LET),
-        keyword("func", TokenData::K_FUNC),
-        keyword("return", TokenData::K_RETURN),
-        keyword("if", TokenData::K_IF),
-
+        symbols,
+        characters,
         ident,
     );
     let mut parser = many1(alt(parsers));

@@ -1,5 +1,6 @@
 let a = true
 let b = false
+let c = 10
 
 if a && b {
   println("and")
@@ -7,4 +8,18 @@ if a && b {
 if a || b {
   println("or")
 }
-
+if c == 9 {
+  println("is nine")
+}
+if c + 2 == 3 * 4 {
+  println("c plus two is four times three")
+}
+if b == true {
+  println("b is true")
+}
+if b == false {
+  println("b is false")
+}
+if a != false {
+  println("a is not false")
+}

@@ -99,7 +99,7 @@ impl LNode {
             NodeData::Expr { t1, t2, op } => {
                 let (t1, t1_t) = t1.type_check(table)?;
                 let (t2, t2_t) = t2.type_check(table)?;
-                println!("expr terms: {}, {}", t1_t, t2_t);
+                //println!("expr terms: {}, {}", t1_t, t2_t);
                 if t1_t != t2_t {
                     return Err( TypeError::new(
                         t2.start(),
@@ -110,7 +110,7 @@ impl LNode {
                 }
 
                 let t = match (t1_t, op.as_str(), t2_t) {
-                    (_, "==" ,_) => Type::Bool,
+                    (_, "==" | "!=",_) => Type::Bool,
                     (Type::Bool, "||" | "&&"  ,Type::Bool) => Type::Bool,
                     (Type::Int, "*" | "+" | "-" | "/", Type::Int) => Type::Int,
                     (t1 @ _, op @ _, t2 @ _) => panic!("invalid operands. Cannot apply operator '{op}' on terms {t1} and {t2}")
@@ -208,7 +208,7 @@ impl LNode {
                 )
             }
             NodeData::Block { v } => {
-                // TODO: Iterate through statements. Last one determines type.
+                // TODO: Last one determines type.
                 let mut nv = Vec::new();
                 nv.reserve(v.len());
                 for stmt in v {
@@ -223,7 +223,6 @@ impl LNode {
             NodeData::Declaration { ident, expr } => {
                 // Set type for ident
                 let (expr, expr_t) = expr.type_check(table)?;
-                println!("declaration type: {}", expr_t);
                 table.define_v(&ident, expr_t.clone());
                 let expr = Box::new(expr);
 
