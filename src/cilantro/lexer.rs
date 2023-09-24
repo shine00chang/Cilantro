@@ -266,9 +266,28 @@ pub fn tokenize (source: String) -> Tokens {
     );
     let mut parser = many1(alt(parsers));
     let res = parser(span).unwrap();
+
+    // Some unrecognized token
     if !res.0.is_empty() {
-        println!("{}", res.0);
-        panic!("Lexer did not consume the entire string.");
+        let source = res.0;
+
+        let pos = if let Some(last) = res.1.last() { 
+            last.end+1
+        } else { 0 };
+
+        let mut end = 0;
+        for _ in 0..20 {
+            if end == source.len() || source.as_bytes()[end].is_ascii_control() { 
+                break
+            }
+            end += 1;
+        }
+
+        println!("=== Tokenization Error ===");
+        println!("unrecognized token at: {pos}");
+        println!("  |  {}", &source[..end]);
+        println!("     ^---- here");
+        panic!("- lexer did not consume the entire string. Unrecognized token.");
     }
     let mut tokens = res.1;
     tokens.push(Token{ start: source.len(), end: source.len(), data: TokenData::EOF});
