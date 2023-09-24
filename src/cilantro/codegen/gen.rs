@@ -69,6 +69,7 @@ impl LNode {
             },
             NodeData::Return { expr } => {
                 expr.codegen(prog, func);
+                func.push("return");
             },
             NodeData::Invoke { ident, args } => {
                 func.push_s(format!("(call ${}", ident));
