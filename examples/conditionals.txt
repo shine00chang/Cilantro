@@ -23,3 +23,6 @@ if b == false {
 if a != false {
   println("a is not false")
 }
+if b == !true {
+  println("b is !true")
+}

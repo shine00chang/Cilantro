@@ -92,6 +92,10 @@ pub enum NodeData {
         t2: ChildRef,
         op: String, 
     },
+    UExpr {
+        op: String,
+        t: ChildRef,
+    },
     T1, T2, T3, TBase, 
 
     Return { expr: ChildRef },
@@ -106,7 +110,7 @@ pub enum NodeData {
 impl NodeT {
     pub fn is_evaluable (&self) -> bool {
         match self {
-            Expr | Invoke => true,
+            Expr | UExpr | Invoke => true,
             _ => false,
         }
     }

@@ -208,6 +208,7 @@ impl LNode {
             NodeData::Block { v } => v.iter().map(|x| x).collect(),
             NodeData::Invoke { args, .. } => args.iter().map(|x| x).collect(), 
             NodeData::Expr { t1, t2, .. } => vec![t1, t2],
+            NodeData::UExpr { t, .. } => vec![t],
             NodeData::Return { expr } => vec![expr],
             NodeData::If { expr, block } => vec![expr, block],
             _ => vec![],
@@ -227,6 +228,8 @@ impl LNode {
             NodeData::Declaration { ident, .. } => 
                 write!(f, "ident: {:?}, ", ident)?,
             NodeData::Expr { op, .. } => 
+                write!(f, "op: {:?}, ", op)?,
+            NodeData::UExpr { op, .. } => 
                 write!(f, "op: {:?}, ", op)?,
             NodeData::Invoke { ident, .. } => 
                 write!(f, "ident: {:?}, ", ident)?,

@@ -62,8 +62,9 @@ impl Node {
                     .collapse_if_1()
             },
             NodeT::TBase => {
-                self.filter_tok(vec![PAREN_L, PAREN_R])
-                    .change_t(NodeT::Expr)
+                self = self.filter_tok(vec![PAREN_L, PAREN_R]);
+                let t = if self.children.len() == 2 { NodeT::UExpr } else { NodeT::Expr };
+                self.change_t(t)
                     .recurse()
                     .collapse_if_1()
             },

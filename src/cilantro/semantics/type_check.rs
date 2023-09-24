@@ -75,7 +75,7 @@ pub fn type_check (nodes: Vec<LNode>) -> Result<Vec<LNode>, TypeError> {
 }
 
 impl LElem {
-    fn type_check (mut self, table: &mut TypeTable) -> Result<(LElem, Type), TypeError> {
+    fn type_check (self, table: &mut TypeTable) -> Result<(LElem, Type), TypeError> {
         match self {
             LElem::Token(tok) => {
                 let (tok, t) = tok.type_check(table);
@@ -120,6 +120,22 @@ impl LNode {
                 NodeData::Expr{
                     t1: Box::new(t1),
                     t2: Box::new(t2),
+                    op,
+                },
+                t 
+                )
+            },
+            NodeData::UExpr { t: term, op } => {
+                let (term, t) = term.type_check(table)?;
+                
+                let t = match (t, op.as_str()) {
+                    (Type::Bool, "!") => Type::Bool,
+                    (t @ _, op @ _) => panic!("invalid operands. Cannot apply unary operator '{op}' on term {t}")
+                };
+
+                (
+                NodeData::UExpr{
+                    t: Box::new(term),
                     op,
                 },
                 t 

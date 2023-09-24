@@ -111,37 +111,29 @@ impl Node {
                         else { panic!() };
                     v.push((ident.clone(), t.clone()));
                 }
-                /*
-                for child in self.children.into_iter() {
-                    if let Elem::Token(t) = child {
-                        if let TokenData::IDENT(s) = t.data {
-                            v.push(s); 
-                        } else { panic!() }
-                    } else { panic!() }
-                }
-                */
                 NodeData::Params{ v }
             },
             NodeT::Expr => {
-                let op = if let Elem::Token(t) = &self.children[1] {
-                    match &t.data {
-                        TokenData::OP1_b(op) |
-                        TokenData::OP2_b(op) | 
-                        TokenData::OP3_n(op) | 
-                        TokenData::OP4_n(op) | 
-                        TokenData::OP_UNARY(op) => op,
-                        t @ _ => panic!("Found a non-operator token in expression: {t}")
-                    }.clone()
-                } else { panic!() };
-
-                let t1 = match self.children[0].clone() {
+                let t2 = match self.children.pop().unwrap() {
                     Elem::Node(n)  => {
                         assert!(n.t.is_evaluable());
                         LElem::Node(n.extract())
                     },
                     Elem::Token(t) => LElem::Token(LToken::from(t))
                 };
-                let t2 = match self.children[2].clone() {
+
+                let op = if let Elem::Token(t) = self.children.pop().unwrap() {
+                    match t.data {
+                        TokenData::OP1_b(op) |
+                        TokenData::OP2_b(op) | 
+                        TokenData::OP3_n(op) | 
+                        TokenData::OP4_n(op) |
+                        TokenData::OP_UNARY(op) => op,
+                        t @ _ => panic!("Found a non-operator token in expression: {t}")
+                    }
+                } else { panic!() };
+
+                let t1 = match self.children.pop().unwrap() {
                     Elem::Node(n)  => {
                         assert!(n.t.is_evaluable());
                         LElem::Node(n.extract())
@@ -151,11 +143,32 @@ impl Node {
                 let t1 = Box::new(t1);
                 let t2 = Box::new(t2);
 
-
                 NodeData::Expr{
                     t1,
                     t2,
                     op,
+                }
+            },
+            NodeT::UExpr => {
+                let t = match self.children.pop().unwrap() {
+                    Elem::Node(n)  => {
+                        assert!(n.t.is_evaluable());
+                        LElem::Node(n.extract())
+                    },
+                    Elem::Token(t) => LElem::Token(LToken::from(t))
+                };
+                let t = Box::new(t);
+
+                let op = if let Elem::Token(t) = self.children.pop().unwrap() {
+                    match t.data {
+                        TokenData::OP_UNARY(op) => op,
+                        t @ _ => panic!("Found a non-unary-operator token in expression: {t}")
+                    }
+                } else { panic!() };
+
+                NodeData::UExpr{
+                    op,
+                    t
                 }
             },
             NodeT::Function => {

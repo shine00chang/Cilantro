@@ -79,10 +79,21 @@ impl LNode {
 
                 func.push(")");
             },
+            NodeData::UExpr { op, t } => {
+                match op.as_str() {
+                    "!" => {
+                        func.push("(i32.ne");
+                        func.push("(i32.const 1)");
+                        t.codegen(prog, func);
+                        func.push(")");
+                    },
+                    op @ _ => panic!("found unimplemented unary operator: {op}")
+                }
+            },
             NodeData::Expr{ op, t1, t2 } => {
 
                 // Equality 
-                if matches!(&op[..], "==" | "!=") {
+                if matches!(op.as_str(), "==" | "!=") {
                     func.push_s(format!(
                         "({}.{}",
                         t1.t().gen(),
@@ -97,7 +108,7 @@ impl LNode {
 
                 match self.t {
                     Type::Int => {
-                        let a = match &op[..] {
+                        let a = match op.as_str() {
                             "+" => "(i64.add",
                             "-" => "(i64.sub",
                             "*" => "(i64.mul",
@@ -110,7 +121,7 @@ impl LNode {
                         func.push(")");
                     },
                     Type::Bool => {
-                        let a = match &op[..] {
+                        let a = match op.as_str() {
                             "||" => Some("(i32.or"),
                             "&&" => Some("(i32.and"),
                             op @ _ => panic!("found unimplemented boolean operator: {op}")
