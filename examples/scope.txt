@@ -1,0 +1,6 @@
+let x = "global" 
+if true {
+    let x = "if"
+    println(x)
+}
+println(x)

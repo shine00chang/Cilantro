@@ -153,6 +153,8 @@ impl LNode {
                         t 
                     ));
                 }
+                let (block, _) = block.type_check(table)?;
+                let block = Box::new(block);
                 
                 (
                 NodeData::If { 

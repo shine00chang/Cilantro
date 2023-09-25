@@ -8,6 +8,7 @@ use super::*;
 // TypeTable exposed for annotation parser
 // TypeError exposed for visualizer
 pub use type_check::{TypeTable, TypeError};
+pub use scope::ScopeError;
 
 pub fn to_ast (source: &String, nodes: Vec<Node>) -> Vec<LNode> {
     
@@ -24,7 +25,11 @@ pub fn to_ast (source: &String, nodes: Vec<Node>) -> Vec<LNode> {
     nodes.iter().for_each(|n| println!("{n}"));
 
     // Identifier Scope Resolution 
-    nodes.iter_mut().for_each(|n| n.resolve_scope());
+    if let Err(err) = scope::resolve_scope(&mut nodes) {
+        //println!("{err}");
+        err.print(source);
+        panic!();
+    }
 
     // Extract children values & Map to Node data.
     let nodes: Vec<_> = nodes.into_iter().map(|n| n.extract()).collect();

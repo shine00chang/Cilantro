@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use crate::cilantro::lexer::types;
 
 use super::*;
@@ -6,6 +8,7 @@ use super::semantics::TypeTable;
 type Span<'a> = nom_locate::LocatedSpan<&'a str>;
 
 pub const RESERVED_MEM: usize = 40;
+const PREFIX: &'static str = ";;@signature ";
 
 impl TypeTable {
     /// Creates a TypeTable instance with the types and signatures of symobls from STD lib.
@@ -14,7 +17,6 @@ impl TypeTable {
     /// - Function Siganture: ';;@signature $[identifier] : [return-type] ([param0],[param1],..)
     
     pub fn with_std () -> Self {
-        const PREFIX: &'static str = ";;@signature ";
         let mut table = Self::default();
 
         // For each line

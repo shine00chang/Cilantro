@@ -111,6 +111,13 @@ impl TypeError {
     }
 }
 
+use super::semantics::ScopeError;
+impl ScopeError {
+    pub fn print(self, source: &String) {
+        println!("== Scope Error ==");
+        // TODO:
+    }
+}
 
 impl Node {
     /// Prints out node tree in a vertical graph

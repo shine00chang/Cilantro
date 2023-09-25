@@ -45,6 +45,7 @@ impl LNode {
             },
             NodeData::Declaration{ ident, expr } => {
 
+                println!("{:?}", expr);
                 let expr_t = expr.t();
 
                 // Declare local variable
@@ -57,9 +58,7 @@ impl LNode {
             },
             NodeData::If{ expr, block } => {
 
-                if let LElem::Node(expr) = &**expr {
-                    expr.codegen(prog, func);
-                } else { panic!() };
+                expr.codegen(prog, func);
 
                 func.push("(if");
                 func.push("(then");

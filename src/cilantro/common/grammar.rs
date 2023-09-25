@@ -118,7 +118,7 @@ impl NodeT {
 impl TokenT {
     pub fn is_evaluable (&self) -> bool {
         match self {
-            INT | TokenT::IDENT | TokenT::STR_LIT => true,
+            INT | BOOL | IDENT | STR_LIT => true,
             _ => false,
         }
     }
