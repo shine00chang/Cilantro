@@ -44,7 +44,6 @@ impl SymbolStack {
             .front_mut()
             .expect("Should always have global scope")
             .insert(ident.clone()) {
-            println!("defined '{ident}' in:\n{:?}", self.stack);
             Ok(self.scope)
         } else {
             Err(())
@@ -52,9 +51,7 @@ impl SymbolStack {
     }
 
     fn new_scope (&mut self) {
-        println!("new_scope: {:?}", self.stack);
         self.stack.push_front(HashSet::new());
-        println!("new_scope: {:?}", self.stack);
         self.scope += 1;
     }
 
@@ -62,7 +59,6 @@ impl SymbolStack {
         if self.stack.len() == 1 || self.scope == 0 {
             panic!("tried removing global scope");
         }
-        println!("end_scope: {:?}", self.stack);
         self.stack.pop_front();
         self.scope -= 1;
     }
