@@ -120,7 +120,7 @@ fn to_string(prog: Prog, main: Func) -> String {
     let mut code = String::new();
 
     code.push_str("(module\n");
-    code.push_str(&get_lib());
+    code.push_str(&stdlib::get_lib());
 
     code.push_str(&prog.global.v);
     for f in prog.funcs {

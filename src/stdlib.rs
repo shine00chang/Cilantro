@@ -75,3 +75,22 @@ fn to_type (s: &str) -> Result<Type, ()> {
         panic!("'types' parser should not have returned non-TokenData::TYPE token");
     }
 }
+
+
+
+use std::fs::read_to_string;
+const LIBPATH: &'static str = "lib.wat";
+/// Returns the native library as a string.
+#[cfg(not(target_family = "wasm"))]
+pub fn get_lib () -> String {
+    read_to_string(LIBPATH) 
+        .expect(&format!("could not find library file '{}'", LIBPATH))
+        .lines()
+        .fold(String::new(), |mut s, line| { s.push_str(line); s.push('\n'); s })
+}
+
+#[cfg(target_family = "wasm")]
+#[wasm_bindgen(module = "/web/lib-getter.js")]
+extern "C" {
+    pub fn get_lib() -> String;
+}

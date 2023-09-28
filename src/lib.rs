@@ -19,7 +19,7 @@ use wasm_bindgen::prelude::*;
 
 /// Runs Lexer, Parser, Interpreter, and Visualizer
 #[wasm_bindgen]
-pub fn from_source (source: String) -> String {
+pub fn compile (source: String) -> String {
 
     let tokens = lexer::tokenize(source.clone());
     println!("Token Stream:\n{}\n", visualizer::print_tokens(&tokens, &source).unwrap());
@@ -45,7 +45,7 @@ pub fn from_source (source: String) -> String {
 
 pub fn compile_to (source: String, out_path: &str) -> std::io::Result<()> {
 
-    let code = from_source(source);
+    let code = compile(source);
 
     let mut file = File::create(out_path).expect(format!("Could not create file '{}'", out_path).as_str());
     file.write_all(code.as_bytes()).expect(format!("Could not write to file '{}'", out_path).as_str());

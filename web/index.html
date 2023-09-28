@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Hello wasm-pack!</title>
+  </head>
+  <body>
+    <h1>Cilantro Web</h1>
+    <p>Something will be here at some point</p>
+
+    <script type='module' src='./web/lib-getter.js'></script>
+    <script type='module'>
+      import init, { compile } from '../js-pkg/cilantro.js';
+
+      console.log('== Initializing.. ==');
+      const wasm = await init();
+
+      console.log('== Compiling.. ==');
+      const source = `let a = 1 + 2`;
+
+      const code = compile(source);
+
+      console.log('== Done! ==');
+      console.log(code);
+    </script>
+  </body>
+</html>
