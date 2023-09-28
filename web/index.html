@@ -16,7 +16,14 @@
       const wasm = await init();
 
       console.log('== Compiling.. ==');
-      const source = `let a = 1 + 2`;
+      const source = 
+`
+let a = 1 + 2
+let b = 2
+println("hello world!")
+print("1 + 2 + 2 = ")
+print64(a + b)
+`;
 
       const code = compile(source);
 

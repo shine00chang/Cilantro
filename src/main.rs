@@ -1,13 +1,10 @@
-/*
 use std::env;
 use std::fs::File;
 use std::io::prelude::*;
 use wasmtime::*;
 use wasmtime_wasi::*;
-*/
 
 fn main () {
-    /*
     let args: Vec<String> = env::args().collect();
     
     if args.len() < 2 {
@@ -48,5 +45,4 @@ fn main () {
         .get_default(&mut store, "").unwrap()
         .typed::<(), ()>(&store).unwrap()
         .call(&mut store, ()).unwrap();
-    */
 }

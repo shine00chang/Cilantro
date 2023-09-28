@@ -99,6 +99,23 @@ impl Node {
             return Ok(());
         } 
 
+        // If self is function, define symbol. Don't add scope annotation
+        if self.t == NodeT::Function {
+            let ident = {
+                if let Elem::Token(tok) = &mut self.children[0] {
+                    if let TokenData::IDENT(ident) = &mut tok.data { ident }
+                    else { panic!() }
+                } else { panic!() }
+            };
+            let scope_level = stack.declare(ident.clone())
+                .map_err(|_| { ScopeError{} })?;
+            
+            if scope_level > 0 {
+                panic!("Attempted to define function at non-global scope");
+            }
+            return Ok(());
+        }
+
         // If self is block, start scope
         if self.t == NodeT::Block {
             stack.new_scope();
@@ -113,6 +130,8 @@ impl Node {
                         TokenData::IDENT(ident) => 
                         {
                             // NOTE: Exception: Function 
+                            // TODO: Add lib functions to symbolstack so we can check function
+                            // symbols
                             if self.t == NodeT::Invoke && i == 0 { continue };
 
                             // Add scope annotation to end of identifier

@@ -14,11 +14,13 @@ pub use lexer::tokenize;
 
 use std::fs::File;
 use std::io::prelude::*;
+
+#[cfg(target_family = "wasm")]
 use wasm_bindgen::prelude::*;
 
 
 /// Runs Lexer, Parser, Interpreter, and Visualizer
-#[wasm_bindgen]
+#[cfg_attr(target_family = "wasm", wasm_bindgen)]
 pub fn compile (source: String) -> String {
 
     let tokens = lexer::tokenize(source.clone());
