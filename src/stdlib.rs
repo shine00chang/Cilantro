@@ -1,6 +1,4 @@
-use std::collections::HashSet;
-
-use crate::cilantro::lexer::types;
+use crate::lexer::types;
 
 use super::*;
 use super::semantics::TypeTable;

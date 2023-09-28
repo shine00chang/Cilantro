@@ -14,10 +14,12 @@ pub use lexer::tokenize;
 
 use std::fs::File;
 use std::io::prelude::*;
+use wasm_bindgen::prelude::*;
 
 
 /// Runs Lexer, Parser, Interpreter, and Visualizer
-pub fn from_source (source: String) -> std::io::Result<()> {
+#[wasm_bindgen]
+pub fn from_source (source: String) -> String {
 
     let tokens = lexer::tokenize(source.clone());
     println!("Token Stream:\n{}\n", visualizer::print_tokens(&tokens, &source).unwrap());
@@ -38,12 +40,17 @@ pub fn from_source (source: String) -> std::io::Result<()> {
     println!("{code}");
     */ 
 
-    // Write to 'out/prog.wat'
-    let path = "out/prog.wat";
-    let mut file = File::create(path).expect(format!("Could not create file '{}'", path).as_str());
-    file.write_all(code.as_bytes()).expect(format!("Could not write to file '{}'", path).as_str());
+    code
+}
 
-    println!("Generated code written to '{path}'");
+pub fn compile_to (source: String, out_path: &str) -> std::io::Result<()> {
+
+    let code = from_source(source);
+
+    let mut file = File::create(out_path).expect(format!("Could not create file '{}'", out_path).as_str());
+    file.write_all(code.as_bytes()).expect(format!("Could not write to file '{}'", out_path).as_str());
+
+    println!("Generated code written to '{out_path}'");
 
     Ok(())
 }

@@ -1,12 +1,13 @@
-mod cilantro; 
-
+/*
 use std::env;
 use std::fs::File;
 use std::io::prelude::*;
 use wasmtime::*;
 use wasmtime_wasi::*;
+*/
 
 fn main () {
+    /*
     let args: Vec<String> = env::args().collect();
     
     if args.len() < 2 {
@@ -21,7 +22,7 @@ fn main () {
         file.read_to_string(&mut contents).expect("Could not read file");
         contents
     };
-    cilantro::from_source(source).expect("Failed to compile.");
+    cilantro::compile_to(source, "out/prog.wat").expect("Failed to compile.");
 
     let engine = Engine::default();
     let mut linker = Linker::new(&engine);
@@ -47,4 +48,5 @@ fn main () {
         .get_default(&mut store, "").unwrap()
         .typed::<(), ()>(&store).unwrap()
         .call(&mut store, ()).unwrap();
+    */
 }
