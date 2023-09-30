@@ -19,6 +19,15 @@ use std::io::prelude::*;
 use wasm_bindgen::prelude::*;
 
 
+#[cfg(target_family = "wasm")]
+#[wasm_bindgen]
+pub fn tobytes (wat_str: String) -> js_sys::Uint8Array {
+    let bytes = wat::parse_str(wat_str).expect("could not convert from wat to wasm");
+
+    js_sys::Uint8Array::from(&bytes[..])
+}
+
+
 /// Runs Lexer, Parser, Interpreter, and Visualizer
 #[cfg_attr(target_family = "wasm", wasm_bindgen)]
 pub fn compile (source: String) -> String {

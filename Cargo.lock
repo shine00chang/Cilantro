@@ -239,6 +239,7 @@ checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 name = "cilantro"
 version = "0.1.0"
 dependencies = [
+ "js-sys",
  "nom",
  "nom_locate",
  "strum",
@@ -246,6 +247,7 @@ dependencies = [
  "wasm-bindgen",
  "wasmtime",
  "wasmtime-wasi",
+ "wat",
 ]
 
 [[package]]
@@ -860,6 +862,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "936cfd212a0155903bcbc060e316fb6cc7cbf2e1907329391ebadc1fe0ce77c2"
 dependencies = [
  "libc",
+]
+
+[[package]]
+name = "js-sys"
+version = "0.3.64"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c5f195fe497f702db0f318b07fdd68edb16955aed830df8363d837542f8f935a"
+dependencies = [
+ "wasm-bindgen",
 ]
 
 [[package]]

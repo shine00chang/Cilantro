@@ -66,28 +66,16 @@
 
     <hr class="m-4">
 
-    <div id="console" class="p-4 rounded-md text-slate-50 h-48" style="background: #333; font-family: courier new">
-      == console ==
+    <div id="output-div" class="p-4 rounded-md text-slate-50 h-48" style="background: #333; font-family: courier new">
     </div>
   </div>
 </div>
     
 
     <script type='module' src='./web/lib-getter.js'></script>
+    <script type='module' src='./web/port.js'></script>
     <script type='module'>
-      import init, { compile } from '../js-pkg/cilantro.js';
-
-      async function run_cilantro(source) {
-        console.log('== Initializing.. ==');
-        const wasm = await init();
-
-        console.log('== Compiling.. ==');
-        const code = compile(source);
-
-        console.log('== Done! ==');
-
-        return code;
-      }
+      import { compile, run_wasm } from './web/port.js';
 
       const compbtn = document.querySelector('#compile-btn')
       compbtn.addEventListener(
@@ -111,11 +99,16 @@
       compbtn.addEventListener(
         "click",
         async event => {
-          const source = document.querySelector('#code-area').value.trim();
-          const wasm = await run_cilantro(source);
-          document.querySelector('#wat-div').innerText = wasm;
+          document.querySelector('#output-div').textContent = '';
 
-          // TODO:: Run WASM Code
+          const source = document.querySelector('#code-area').value.trim();
+          const res = await compile(source);
+          if (res == undefined) return;
+
+          const { wat, wasm } = res;
+          document.querySelector('#wat-div').innerText = wat;
+
+          run_wasm(wasm);
         }
       )
     </script>
