@@ -3,7 +3,6 @@
   <head>
     <meta charset="utf-8">
     <title>Cilantro</title>
-    <link rel="stylesheet" href="./web/animations.css">
     <link rel="stylesheet" href="./web/output.css">
     <link rel="stylesheet" href="./web/style.css">
   </head>
@@ -26,15 +25,15 @@
   <div style="width: 2px; background: #444; align-self: stretch;"></div>
 
   <div class="m-2 flex space-x-4 overflow-x-auto no-scrollbar content-stretch">
-    <div class="my-auto italic">fibonacci</div>
-    <div class="my-auto italic">functions</div>
-    <div class="my-auto italic">arithmetic</div>
-    <div class="my-auto italic">conditionals</div>
-    <div class="my-auto italic">scoping</div>
-    <div class="my-auto italic">strings</div>
-    <div class="my-auto italic">syntax error</div>
-    <div class="my-auto italic">type error</div>
-    <div class="my-auto italic">tokenization error</div>
+    <div class="my-auto italic example-btn">fibonacci</div>
+    <div class="my-auto italic example-btn">functions</div>
+    <div class="my-auto italic example-btn">math</div>
+    <div class="my-auto italic example-btn">conditionals</div>
+    <div class="my-auto italic example-btn">scoping</div>
+    <div class="my-auto italic example-btn">strings</div>
+    <div class="my-auto italic example-btn">syntax error</div>
+    <div class="my-auto italic example-btn">type error</div>
+    <div class="my-auto italic example-btn">tokenization error</div>
   </div>
   </div> 
 </div>
@@ -60,13 +59,16 @@
     <div 
       id="wat-div"
       class="p-4 h-60 border-solid rounded-md border-slate-300 border-2 overflow-y-scroll text-xs"
-      style="font-family: courier new"> 
+      style="font-family: courier new; white-space: pre-line"> 
       WASM code will go here
     </div>
 
     <hr class="m-4">
 
-    <div id="output-div" class="p-4 rounded-md text-slate-50 h-48" style="background: #333; font-family: courier new">
+    <div 
+      id="output-div"
+      class="p-4 rounded-md text-slate-50 h-48" 
+      style="background: #333; font-family: courier new; white-space: pre-line">
     </div>
   </div>
 </div>
@@ -95,6 +97,21 @@
           event.target.getAnimations()
             .forEach(anim => anim.reverse())
       );
+
+      async function example_onclick (name) {
+        const text = await fetch(`./examples/${name}.txt`)
+          .then(res => res.text())
+          .catch(console.error);
+
+        document.querySelector('#code-area').value = text;
+      }
+
+      {
+        const example_btns = document.getElementsByClassName('example-btn');
+        for (const el of example_btns) {
+          el.onclick = () => example_onclick(el.innerText)
+        }
+      }
 
       compbtn.addEventListener(
         "click",

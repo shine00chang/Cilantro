@@ -8,6 +8,9 @@ await init();
 console.log('== Done! ==');
 
 
+/* Calls Cilantro to compile source into { WAT, WASM } 
+ * This function contains all Cilantro-relevant calls.
+ */
 export async function compile (source) 
 {
   console.log('== Compiling.. ==');
@@ -17,7 +20,7 @@ export async function compile (source)
     wasm = cilantro_tobytes(wat);
   } catch (err) {
     console.error('== Error at Compilation ==')
-    output_el.textContent += '== Error at Compilation ==';
+    output_el.innerText += '== Error at Compilation ==';
     return undefined;
   }
 
@@ -27,6 +30,10 @@ export async function compile (source)
 }
 
 
+/* Sets polyfill, instantiates & executes WASM module.
+ * Sets the global state `program_instance` for polyfill
+ * functions to gain access to instance-bound objects (linear memory).
+ */
 let program_instance;
 export async function run_wasm (wasm) 
 {
@@ -49,7 +56,7 @@ export async function run_wasm (wasm)
   try {
     program_instance.exports._start();
   } catch(e) {
-    output_el.textContent += "== Runtime Error ==";
+    output_el.innerText += "== Runtime Error ==";
   }
 }
 
@@ -81,11 +88,12 @@ function fd_write(fd, iovs, iovsLen, nwritten)
   let i = 0;
   buffers.forEach(buffer => {
     for (let j = 0; j < buffer.length; j++) {
-       bufferBytes[i++] = buffer[j];
+      if (buffer[j] == 10) buffer[j] = 13;
+      bufferBytes[i++] = buffer[j];
     }
   });
 
-  output_el.textContent += new TextDecoder("utf-8").decode(bufferBytes);
+  output_el.innerText += new TextDecoder("utf-8").decode(bufferBytes);
 
   view.setUint32(nwritten, sum, true);
 
