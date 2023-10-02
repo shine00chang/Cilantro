@@ -160,23 +160,6 @@ impl Node {
             v
         });
 
-        /*
-        // Pop second, then extend first's children onto self.
-        if let Elem::Node(node) = &mut self.children[0] {
-            node.children.extend(self.children.);
-        }
-        println!("compacting: {:?}", self.children);
-        let last = self.children.pop().unwrap();
-        let elem = self.children
-            .pop()
-            .expect("Did not find 2 children. This should mean that the grammar of this node does not follow the list pattern.");
-        if let Elem::Node(node) = elem {
-            if node.t != self.t {
-                self.children.extend(node.children);
-            }
-        }
-        self.children.push(last);
-        */
         self
     }
 

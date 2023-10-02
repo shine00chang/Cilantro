@@ -12,34 +12,34 @@ use common::*;
 use parser::Parser;
 pub use lexer::tokenize;
 
-use std::fs::File;
-use std::io::prelude::*;
-
 #[cfg(target_family = "wasm")]
 use wasm_bindgen::prelude::*;
 
 
-#[cfg(target_family = "wasm")]
-#[wasm_bindgen]
-pub fn tobytes (wat_str: String) -> js_sys::Uint8Array {
-    let bytes = wat::parse_str(wat_str).expect("could not convert from wat to wasm");
-
-    js_sys::Uint8Array::from(&bytes[..])
+pub trait CilantroErrorTrait {
+    fn fmt(&self, source: &String) -> Result<String, std::fmt::Error>;
 }
+
+pub type CilantroError = Box<dyn CilantroErrorTrait>;
+
 
 
 /// Runs Lexer, Parser, Interpreter, and Visualizer
-#[cfg_attr(target_family = "wasm", wasm_bindgen)]
-pub fn compile (source: String) -> String {
+pub fn compile (source: &String) -> Result<String, CilantroError> {
 
-    let tokens = lexer::tokenize(source.clone());
+    let tokens = lexer::tokenize(source)
+        .map_err(|e| -> CilantroError { Box::new(e) })?;
+
     println!("Token Stream:\n{}\n", visualizer::print_tokens(&tokens, &source).unwrap());
 
-    let nodes = Parser::new(tokens, &source).parse();
+    let nodes = Parser::new(tokens, &source)
+        .parse()
+        .map_err(|e| -> CilantroError { Box::new(e) })?;
+
     println!("Parsed Concrete Sytnax Tree:");
     nodes.iter().for_each(|n| print!("{n}"));
 
-    let nodes = semantics::to_ast(&source, nodes);
+    let nodes = semantics::to_ast(nodes)?;
 
     println!("Abstract Syntax Tree:");
     nodes.iter().for_each(|n| print!("{n}"));
@@ -51,17 +51,25 @@ pub fn compile (source: String) -> String {
     println!("{code}");
     */ 
 
-    code
+    Ok(code)
 }
 
-pub fn compile_to (source: String, out_path: &str) -> std::io::Result<()> {
 
-    let code = compile(source);
+/// Wraps `compile(..)`, maps Result<String, CilantroError> -> Result<String, String> for ease of
+/// wasm porting.
+#[cfg(target_family = "wasm")]
+#[wasm_bindgen]
+pub fn compile_web (source: String) -> Result<String, String> {
+    compile(&source)
+        .map_err(|err| err.fmt(&source).expect("error formating failed.").clone())
+}
 
-    let mut file = File::create(out_path).expect(format!("Could not create file '{}'", out_path).as_str());
-    file.write_all(code.as_bytes()).expect(format!("Could not write to file '{}'", out_path).as_str());
+/// Transpiles the generated WAT to WASM. Necessary since JS does not natively support this
+/// feature.
+#[cfg(target_family = "wasm")]
+#[wasm_bindgen]
+pub fn tobytes (wat_str: String) -> js_sys::Uint8Array {
+    let bytes = wat::parse_str(wat_str).expect("could not convert from wat to wasm");
 
-    println!("Generated code written to '{out_path}'");
-
-    Ok(())
+    js_sys::Uint8Array::from(&bytes[..])
 }

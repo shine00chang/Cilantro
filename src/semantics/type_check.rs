@@ -18,6 +18,7 @@ impl TypeError {
     }
 }
 
+
 impl LElem {
     pub fn node_data (&self) -> &NodeData {
         if let Self::Node(n) = self {

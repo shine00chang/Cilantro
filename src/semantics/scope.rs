@@ -2,9 +2,10 @@ use std::collections::{LinkedList, HashSet};
 
 use super::*;
 
-pub struct ScopeError {
+pub struct ScopeError { }
 
-}
+
+
 
 #[derive(Debug)]
 struct SymbolStack {

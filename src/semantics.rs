@@ -10,7 +10,7 @@ use super::*;
 pub use type_check::{TypeTable, TypeError};
 pub use scope::ScopeError;
 
-pub fn to_ast (source: &String, nodes: Vec<Node>) -> Vec<LNode> {
+pub fn to_ast (nodes: Vec<Node>) -> Result<Vec<LNode>, CilantroError> {
     
     // Trim unecessary grammar elements.
     let mut nodes: Vec<_> = nodes.into_iter().map(|n| {
@@ -25,11 +25,8 @@ pub fn to_ast (source: &String, nodes: Vec<Node>) -> Vec<LNode> {
     nodes.iter().for_each(|n| println!("{n}"));
 
     // Identifier Scope Resolution 
-    if let Err(err) = scope::resolve_scope(&mut nodes) {
-        //println!("{err}");
-        err.print(source);
-        panic!();
-    }
+    scope::resolve_scope(&mut nodes)
+        .map_err(|err| -> CilantroError { Box::new(err) })?;
 
     // Extract children values & Map to Node data.
     let nodes: Vec<_> = nodes.into_iter().map(|n| n.extract()).collect();
@@ -39,16 +36,8 @@ pub fn to_ast (source: &String, nodes: Vec<Node>) -> Vec<LNode> {
 
 
     // Type checking
-    let nodes = match type_check::type_check(nodes) {
-        Err(err) => {
-            let out = String::new();
-            err.print(source);
-            println!("{out}");
-            panic!();
-        }, 
-        Ok(v) => v
-    };
+    let nodes = type_check::type_check(nodes).map_err(|err| -> CilantroError { Box::new(err) })?;
 
-    nodes
+    Ok(nodes)
 }
 

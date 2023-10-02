@@ -1,4 +1,4 @@
-import init, { compile as cilantro_compile, tobytes as cilantro_tobytes } from '../js-pkg/cilantro.js';
+import init, { compile_web as cilantro_compile, tobytes as cilantro_tobytes } from '../js-pkg/cilantro.js';
 
 
 const output_el = document.querySelector('#output-div');
@@ -19,8 +19,9 @@ export async function compile (source)
     wat  = cilantro_compile(source);
     wasm = cilantro_tobytes(wat);
   } catch (err) {
-    console.error('== Error at Compilation ==')
-    output_el.innerText += '== Error at Compilation ==';
+    console.log(err);
+    output_el.innerText += '== Compilation Error :( ==\n';
+    output_el.innerText += err;
     return undefined;
   }
 

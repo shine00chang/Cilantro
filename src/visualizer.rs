@@ -69,11 +69,12 @@ impl fmt::Display for Type {
 }
 
 use super::semantics::TypeError;
-impl TypeError {
-    pub fn print(self, source: &String) {
-        print!("=== Type Error ===\n");
+impl CilantroErrorTrait for TypeError {
+    fn fmt (&self, source: &String) -> Result<String, fmt::Error> {
+        let mut f = String::new();
+        write!(f, "=== Type Error ===\n")?;
         
-        print!("Error at: {}\n", self.start);
+        write!(f, "Error at: {}\n", self.start)?;
         {
             // Get start & end of line slice
             let mut a = self.start;
@@ -93,29 +94,33 @@ impl TypeError {
                 b += 1;
             }
 
-            print!("    ");
+            write!(f, "    ")?;
             for c in source[a..b].chars() {
                 assert!(!c.is_ascii_control());
                 let c = c.escape_debug();
-                print!("{}", c);
+                write!(f, "{}", c)?;
             }
 
             // Underline
-            print!("\n    {:w$}^", "", w=self.start-a);
-            print!("{:-<w$}{}\n", "", self.msg, w=5);
+            write!(f, "\n    {:w$}^", "", w=self.start-a)?;
+            write!(f, "{:-<w$}{}\n", "", self.msg, w=5)?;
 
             // Note
-            if let Some(expected) = self.expected { print!("  expected type: {}\n", expected) }
-            if let Some(found)    = self.found    { print!("  found type: {}\n", found) }
+            if let Some(expected) = &self.expected { write!(f, "  expected type: {}\n", expected)?; }
+            if let Some(found)    = &self.found    { write!(f, "  found type: {}\n", found)?; }
         }
+
+        Ok(f)
     }
 }
 
 use super::semantics::ScopeError;
-impl ScopeError {
-    pub fn print(self, source: &String) {
-        println!("== Scope Error ==");
+impl CilantroErrorTrait for ScopeError {
+    fn fmt (&self, source: &String) -> Result<String, fmt::Error> {
+        let mut f = String::new();
+        write!(f, "== Scope Error ==")?;
         // TODO:
+        Ok(f)
     }
 }
 
@@ -369,25 +374,3 @@ pub fn print_table (table: &ParseTable) -> Result<String, std::fmt::Error> {
     Ok(f)
 }
 
-
-
-#[cfg(test)]
-mod test {
-    use super::*;
-    use crate::cilantro::tokenize;
-    #[test]
-    fn tokens () {
-        let source = "let A = 100\n let B = 68_104".to_owned();
-        let toks = tokenize(source.clone());
-        let s = print_tokens(&toks, &source).unwrap();
-
-        let res = concat!(
-            "K_LET       IDENT EQ_1  INT(100)       K_LET       IDENT EQ_1  INT(68104)        EOF\n",
-            "│           │     │     │              │           │     │     │                 │\n",
-            "l  e  t     A     =     1  0  0  \\n    l  e  t     B     =     6  8  _  1  0  4  \n"
-        );
-        println!("{}", s);
-
-        assert_eq!(s, res);
-    }
-}

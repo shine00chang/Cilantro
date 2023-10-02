@@ -10,6 +10,7 @@ use nom::{
 };
 
 use super::*;
+use std::fmt::Write;
 
 type Span<'a> = nom_locate::LocatedSpan<&'a str>;
 
@@ -237,10 +238,35 @@ fn op_unary (input: Span) -> IResult<Span, Token> {
 }
 
 
+pub struct LexerError {
+    pos: usize,
+}
 
 
-pub fn tokenize (source: String) -> Tokens {
-    let span = Span::new(&source);
+impl CilantroErrorTrait for LexerError {
+    fn fmt(&self, source: &String) -> Result<String, std::fmt::Error> {
+        let mut f = String::new();
+
+        let mut end = self.pos;
+        for _ in 0..20 {
+            if end == source.len() || source.as_bytes()[end].is_ascii_control() { 
+                break
+            }
+            end += 1;
+        }
+
+        write!(f, "=== Tokenization Error ===\n")?;
+        write!(f, "unrecognized token at: {}\n", self.pos)?;
+        write!(f, "  |  {}\n", &source[self.pos..end])?;
+        write!(f, "     ^---- here\n")?;
+
+        Ok(f)
+    }
+}
+
+
+pub fn tokenize (source: &String) -> Result<Tokens, LexerError> {
+    let span = Span::new(source);
 
     // NOTE: Rule for parser order. More general parsers should go in the bottom, that way the more
     // specific ones will filter first, before the general ones capture it.
@@ -269,28 +295,17 @@ pub fn tokenize (source: String) -> Tokens {
 
     // Some unrecognized token
     if !res.0.is_empty() {
-        let source = res.0;
-
+        
+        // Record position where lexing failed.
         let pos = if let Some(last) = res.1.last() { 
             last.end+1
         } else { 0 };
 
-        let mut end = 0;
-        for _ in 0..20 {
-            if end == source.len() || source.as_bytes()[end].is_ascii_control() { 
-                break
-            }
-            end += 1;
-        }
-
-        println!("=== Tokenization Error ===");
-        println!("unrecognized token at: {pos}");
-        println!("  |  {}", &source[..end]);
-        println!("     ^---- here");
-        panic!("- lexer did not consume the entire string. Unrecognized token.");
+        return Err( LexerError { pos } );
     }
+
     let mut tokens = res.1;
     tokens.push(Token{ start: source.len(), end: source.len(), data: TokenData::EOF});
-    tokens
+    Ok(tokens)
 }
 

@@ -59,7 +59,7 @@
     <div 
       id="wat-div"
       class="p-4 h-60 border-solid rounded-md border-slate-300 border-2 overflow-y-scroll text-xs"
-      style="font-family: courier new; white-space: pre-line"> 
+      style="font-family: courier new; white-space: pre"> 
       WASM code will go here
     </div>
 
@@ -67,8 +67,8 @@
 
     <div 
       id="output-div"
-      class="p-4 rounded-md text-slate-50 h-48" 
-      style="background: #333; font-family: courier new; white-space: pre-line">
+      class="p-4 rounded-md text-slate-50 h-48 overflow-y-scroll" 
+      style="background: #333; font-family: courier new; white-space: pre"><pre></pre> 
     </div>
   </div>
 </div>
@@ -116,6 +116,7 @@
       compbtn.addEventListener(
         "click",
         async event => {
+          document.querySelector('#wat-div').textContent = '';
           document.querySelector('#output-div').textContent = '';
 
           const source = document.querySelector('#code-area').value.trim();

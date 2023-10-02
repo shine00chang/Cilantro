@@ -1,9 +1,19 @@
 mod table;
 
+use std::fmt::Write;
+
 use super::*;
 pub use table::ParseTable;
 
+pub struct SyntaxError {
+    msg: String,
+}
 
+impl CilantroErrorTrait for SyntaxError {
+    fn fmt (&self, _source: &String) -> Result<String, std::fmt::Error> {
+        Ok(self.msg.clone())
+    }
+}
 
 /// Parser object. Contains parser table, productions, and source.
 pub struct Parser<'a> {
@@ -44,7 +54,7 @@ impl<'a> Parser<'a> {
     }
 
     /// Parses the passed soruce.
-    pub fn parse (mut self) -> Vec<Node> {
+    pub fn parse (mut self) -> Result<Vec<Node>, SyntaxError> {
         let mut l: Vec<(Elem, usize)> = vec![];
         let mut r: Vec<_> = self.tokens.into_iter().map(|t| Elem::Token(t)).rev().collect();
 
@@ -71,8 +81,10 @@ impl<'a> Parser<'a> {
             if action.is_none() {
                 // To satisfy borrow checker, since 'tokens' was moved.
                 self.tokens = vec![];
-                self.syntax_error(&l, &r);
-                panic!("syntax error");
+                return Err(
+                        self.syntax_error(&l, &r)
+                            .expect("syntax error formatting panicked.") 
+                    );
             }
             let action = action.unwrap();
             
@@ -101,19 +113,22 @@ impl<'a> Parser<'a> {
                 else { panic!("Parser did not remove all tokens. Check definition of 'root' nodes.") }
             )
             .collect();
-        out
+
+        Ok(out)
     }
 
-    fn syntax_error (&self, l: &Vec<(Elem, usize)>, r: &Vec<Elem>) {
+    /// Creates a SyntaxError Object to propogate.
+    fn syntax_error (&self, l: &Vec<(Elem, usize)>, r: &Vec<Elem>) -> Result<SyntaxError, std::fmt::Error> {
+        let mut f = String::new();
 
-        println!("==Syntax Error==");
-        println!("Parser stack dump:");
-        print_stacks(l, r);
+        write!(f, "==Syntax Error==\n")?;
+        // write!(f, "Parser stack dump:\n")?;
+        // write!(f, "{}", print_stacks(l, r)?)?;
 
         let (l, s) = l.last().unwrap();
         let r = r.last().unwrap();
 
-        println!("Error At: {}", l.start());
+        write!(f, "Error At: {}\n", l.start())?;
         {
             // Get Segment
             let mut a = l.start();
@@ -133,61 +148,47 @@ impl<'a> Parser<'a> {
                 b += 1;
             }
             // Segment
-            print!("    ");
+            write!(f, "    ")?;
             for mut c in self.source[a..b].chars() {
                 if c == '\n' { c = ' '; }
                 let c = c.escape_debug();
-                print!("{}", c);
+                write!(f, "{}", c)?;
             } 
-            print!("...\n");
+            write!(f, "...\n")?;
             // Underline
-            print!("    {:w$}", "", w=l.start()-a);
-            print!("{:-<wa$}^{:-<wb$}\n", "", "", wa=r.start()-l.start(), wb=r.end()-r.start());
+            write!(f, "    {:w$}", "", w=l.start()-a)?;
+            write!(f, "{:-<wa$}^{:-<wb$}\n", "", "", wa=r.start()-l.start(), wb=r.end()-r.start())?;
 
             // Note
-            println!("unexpected token: {}", r.t());
+            write!(f, "unexpected token: {}\n", r.t())?;
             let expected: Vec<_> = self.table[*s].iter().map(|(x, _)| x).collect();
-            println!("expected: {:?}", expected);
+            write!(f, "expected: {:?}\n", expected)?;
         }
+
+        Ok(SyntaxError { msg: f })
     }
 }
 
 
-fn print_stacks (l: &Vec<(Elem, usize)>, r: &Vec<Elem>) {
+/// Formats parser stack
+fn print_stacks (l: &Vec<(Elem, usize)>, r: &Vec<Elem>) -> Result<String, std::fmt::Error> {
     const W: usize = 10;
+    let mut f = String::new();
 
     for (_, s) in l {
-        print!("{:<width$.width$} ", s, width=W);
+        write!(f, "{:<width$.width$} ", s, width=W)?;
     }
-    println!();
+    write!(f, "\n")?;
 
     for (e, _) in l {
-        print!("{:<width$.width$} ", format!("{e}"), width=W);
+        write!(f, "{:<width$.width$} ", format!("{e}"), width=W)?;
     }
-    print!(" | ");
+    write!(f, " | ")?;
     for e in r.iter().rev() {
-        print!("{:<width$.width$} ", format!("{e}"), width=W);
+        write!(f, "{:<width$.width$} ", format!("{e}"), width=W)?;
     }
-    println!();
+    write!(f, "\n")?;
+
+    Ok(f)
 }
 
-
-#[cfg(test)]
-mod test {
-    use super::*;
-
-    #[test]
-    fn parser_test () {
-        let s = "baab".to_owned();
-        let toks = tokenize(s.clone());
-
-        let parser = Parser::new_test(toks, &s);
-        println!("starting parse");
-        let nodes = parser.parse();
-        
-        // TODO:
-        for node in nodes {
-            println!("{}", node);
-        }
-    }
-}
