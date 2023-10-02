@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Cilantro</title>
+    <link rel="stylesheet" href="./web/output.css">
+    <link rel="stylesheet" href="./web/style.css">
+  </head>
+  <body style="margin: 40px; height: 100vh">
+
+<div class="flex">
+  <div
+    class="shadow-pop-tl mx-3 p-4 items-stretch font-semibold italic bg-stone-200"
+    style="display: inline; font-size: 3rem">
+    Cilantro</div>
+
+  <div class="m-2 mt-auto text-3xl font-light italic">the web demo</div>
+</div>
+
+<div class="mt-8 mb-2"></div>
+
+<div class="flex p-3" style="background: #eee; border-radius: 1rem">
+  <div class="text-bold my-auto m-4 font-semibold"> Examples </div>
+
+  <div style="width: 2px; background: #444; align-self: stretch;"></div>
+
+  <div class="m-2 flex space-x-4 overflow-x-auto no-scrollbar content-stretch">
+    <div class="my-auto italic example-btn">fibonacci</div>
+    <div class="my-auto italic example-btn">functions</div>
+    <div class="my-auto italic example-btn">math</div>
+    <div class="my-auto italic example-btn">conditionals</div>
+    <div class="my-auto italic example-btn">scoping</div>
+    <div class="my-auto italic example-btn">strings</div>
+    <div class="my-auto italic example-btn">syntax error</div>
+    <div class="my-auto italic example-btn">type error</div>
+    <div class="my-auto italic example-btn">tokenization error</div>
+  </div>
+  </div> 
+</div>
+
+<hr class="m-4">
+
+<div class="italic">your code here:</div>
+<div class="grid grid-cols-2 h-3/5">
+  <div class="p-4 basis-1/2">
+    <button 
+       id="compile-btn"
+       class="my-5 p-3 w-full italic font-bold bg-stone-200"
+        >Compile & Run</button>
+
+    <textarea id="code-area" rows="4" 
+      class="block p-2.5 w-full h-3/4 text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+      style="font-family: courier new"
+      >println("Hello World!")</textarea>
+  </div>
+
+  <div class="p-4 basis-1/2">
+
+    <div 
+      id="wat-div"
+      class="p-4 h-60 border-solid rounded-md border-slate-300 border-2 overflow-y-scroll text-xs"
+      style="font-family: courier new; white-space: pre"> 
+      WASM code will go here
+    </div>
+
+    <hr class="m-4">
+
+    <div 
+      id="output-div"
+      class="p-4 rounded-md text-slate-50 h-48 overflow-y-scroll" 
+      style="background: #333; font-family: courier new; white-space: pre"><pre></pre> 
+    </div>
+  </div>
+</div>
+    
+
+    <script type='module' src='./web/lib-getter.js'></script>
+    <script type='module' src='./web/port.js'></script>
+    <script type='module'>
+      import { compile, run_wasm } from './web/port.js';
+
+      const compbtn = document.querySelector('#compile-btn')
+      compbtn.addEventListener(
+        "mouseenter",
+        (event) => {
+          const el = event.target;
+          el.style.animation = 'none';
+          el.offsetHeight; /* trigger reflow */
+          el.style.animation = null; 
+          el.style.animation = 'shadow-pop-tl 0.3s cubic-bezier(0.470, 0.000, 0.745, 0.715) normal forwards'
+        }
+      );
+
+      compbtn.addEventListener(
+        "mouseleave",
+        (event) => 
+          event.target.getAnimations()
+            .forEach(anim => anim.reverse())
+      );
+
+      async function example_onclick (name) {
+        const text = await fetch(`./examples/${name}.txt`)
+          .then(res => res.text())
+          .catch(console.error);
+
+        document.querySelector('#code-area').value = text;
+      }
+
+      {
+        const example_btns = document.getElementsByClassName('example-btn');
+        for (const el of example_btns) {
+          el.onclick = () => example_onclick(el.innerText)
+        }
+      }
+
+      compbtn.addEventListener(
+        "click",
+        async event => {
+          document.querySelector('#wat-div').textContent = '';
+          document.querySelector('#output-div').textContent = '';
+
+          const source = document.querySelector('#code-area').value.trim();
+          const res = await compile(source);
+          if (res == undefined) return;
+
+          const { wat, wasm } = res;
+          document.querySelector('#wat-div').innerText = wat;
+
+          run_wasm(wasm);
+        }
+      )
+    </script>
+  </body>
+</html>

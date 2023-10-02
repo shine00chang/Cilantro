@@ -1,0 +1,10 @@
+{
+  "name": "cilantro",
+  "version": "0.1.0",
+  "files": [
+    "cilantro_bg.wasm",
+    "cilantro.js"
+  ],
+  "module": "cilantro.js",
+  "sideEffects": false
+}
