@@ -1,6 +1,7 @@
-*under construction*
-
 # Cilantro
+Try it out the web demo [here](https://shine00chang.github.io/Cilantro/). <br>
+<br>
+
 A transpiler for a high-level scripting language to WASM Text (`.wat`) in WASI. Written in Rust 🦀. <br>
 Lexer built with parser-combinator library `nom`. <br>
 Parser implements an SLR(1) parser. <br>
@@ -30,7 +31,6 @@ println("")
 <br>
 
 Build it locally: `cargo run examples/conditionals.txt` <br>
-(**not yet made**) Or try it out on the web [here](www.soon.tm). <br>
 
 ## Demos 
 **Type Error Logging & Tracing:**<br>
@@ -50,9 +50,9 @@ Build it locally: `cargo run examples/conditionals.txt` <br>
 
 ## Examples
 - `cargo run examples/fibonacci.txt`: Recursion showcase.
-- `cargo run examples/arith.txt`: Arithmetics showcase. Implements proper order of operations (*no negation operator yet*)
-- `cargo run examples/conditionals.txt.txt`: Boolean logc & Conditional forks showcase. Supports if statements, boolean algebra, and equality checks (*no string equality yet*)
-- `cargo run examples/funcs.txt`: Functions showcase. Supports function and parameter typing.
+- `cargo run examples/math.txt`: Arithmetics showcase. Implements proper order of operations (*no negation operator yet*)
+- `cargo run examples/conditionals.txt`: Boolean logc & Conditional forks showcase. Supports if statements, boolean algebra, and equality checks (*no string equality yet*)
+- `cargo run examples/functions.txt`: Functions showcase. Supports function and parameter typing.
 - `cargo run examples/strings.txt`: String literals showcase. Supports only string literals.
 - `cargo run examples/syntax-error.txt`: Syntax error logging showcase. Demonstrates traceability.
 - `cargo run examples/type-error.txt`: Type error logging showcase. Demonstrates type inferencing & traceability.
