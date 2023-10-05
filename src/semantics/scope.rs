@@ -2,7 +2,10 @@ use std::collections::{LinkedList, HashSet};
 
 use super::*;
 
-pub struct ScopeError { }
+pub struct ScopeError {
+    msg: String,
+    start: usize
+}
 
 
 
@@ -39,7 +42,7 @@ impl SymbolStack {
 
     /// Declare an identifier. Adds identifier to current scope.
     /// Returns `Err()` if the identifier is found in the scope (redeclaration).
-    fn declare (&mut self, ident: String) -> Result<usize, ()> {
+    fn declare (&mut self, ident: String) -> Result<usize, String> {
         println!("defining '{ident}' in:\n{:?}", self.stack);
         if self.stack
             .front_mut()
@@ -47,7 +50,7 @@ impl SymbolStack {
             .insert(ident.clone()) {
             Ok(self.scope)
         } else {
-            Err(())
+            Err(format!("Attempted to redeclare identifier '{ident}'"))
         }
     }
 
@@ -84,37 +87,56 @@ impl Node {
         
         // If self is declaration, add to stack.
         if self.t == NodeT::Declaration {
-            let ident = {
-                if let Elem::Token(tok) = &mut self.children[0] {
-                    if let TokenData::IDENT(ident) = &mut tok.data { ident }
+            let ident = 
+                if let Elem::Token(tok) = &self.children[0] {
+                    if let TokenData::IDENT(ident) = &tok.data { ident }
                     else { panic!() }
-                } else { panic!() }
-            };
-            let scope_level = stack.declare(ident.clone())
-                .map_err(|_| {
-                    ScopeError{} 
+                } else { panic!() };
+            
+            stack.declare(ident.clone())
+                .map_err(|msg| ScopeError {
+                    msg,
+                    start: self.start
                 })?;
-            ident.push('@');
-            ident.push_str(&scope_level.to_string());
-
-            return Ok(());
         } 
 
-        // If self is function, define symbol. Don't add scope annotation
+        // If self is function, define function identifier. Don't add scope annotation
         if self.t == NodeT::Function {
             let ident = {
-                if let Elem::Token(tok) = &mut self.children[0] {
-                    if let TokenData::IDENT(ident) = &mut tok.data { ident }
+                if let Elem::Token(tok) = &self.children[0] {
+                    if let TokenData::IDENT(ident) = &tok.data { ident }
                     else { panic!() }
                 } else { panic!() }
             };
             let scope_level = stack.declare(ident.clone())
-                .map_err(|_| { ScopeError{} })?;
-            
+                .map_err(|msg| ScopeError {
+                    msg,
+                    start: self.start
+                })?;            
+
             if scope_level > 0 {
-                panic!("Attempted to define function at non-global scope");
+                return Err( ScopeError { 
+                    msg: "Attempted to define function at non-global scope".to_owned(),
+                    start: self.start
+                })
             }
-            return Ok(());
+        }
+
+        // If self is Params, define parameter identifiers.
+        if self.t == NodeT::Params {
+            for child in self.children.iter().step_by(2) {
+                let ident = 
+                    if let Elem::Token(tok) = child {
+                        if let TokenData::IDENT(ident) = &tok.data { ident }
+                        else { panic!() }
+                    } else { panic!() };
+
+                stack.declare(ident.clone())
+                    .map_err(|msg| ScopeError {
+                        msg,
+                        start: self.start
+                    })?;            
+            }
         }
 
         // If self is block, start scope
@@ -130,17 +152,24 @@ impl Node {
                     {
                         TokenData::IDENT(ident) => 
                         {
-                            // NOTE: Exception: Function 
-                            // TODO: Add lib functions to symbolstack so we can check function
-                            // symbols
+                            // NOTE: Function Invocation Exempted. Since stdlib is not in the
+                            // symbol stack.
+                            // TODO: Add lib functions to symbol stack
                             if self.t == NodeT::Invoke && i == 0 { continue };
+
+                            // NOTE: Function Definition Exempted. No scope annotation for function
+                            // identifier
+                            if self.t == NodeT::Function && i == 0 { continue };
 
                             // Add scope annotation to end of identifier
                             if let Some(scope_level) = stack.get_scope(&ident) {
                                 ident.push('@');
                                 ident.push_str(&scope_level.to_string())
                             } else {
-                                return Err(ScopeError{})
+                                return Err(ScopeError { 
+                                    msg: format!("cannot find identifier '{ident}'"),
+                                    start: self.start, 
+                                })
                             }
                         }
                         _ => ()

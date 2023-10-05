@@ -42,6 +42,7 @@ impl TypeTable {
         }
     }
     fn define_v (&mut self, ident: &String, t: Type) {
+        println!("defining variable '{ident}'");
         if self.vars.insert(ident.clone(), t).is_some() {
             panic!("overwriting of variable type: {}", ident);
         }

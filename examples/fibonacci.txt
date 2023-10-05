@@ -11,7 +11,7 @@ func fib (n: i64) -> i64 {
 let num = 13 
 print("fibonacci no.")
 print64(num)
-print(" = ")
+print(" => ")
 print64(fib(num))
 println("")
 
